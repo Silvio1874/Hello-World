@@ -1,0 +1,15 @@
+{
+  "name": "Tastenfreund – Klavier lernen",
+  "short_name": "Tastenfreund",
+  "description": "Klavier lernen ohne Vorkenntnisse – kostenlos, ohne Abo.",
+  "lang": "de",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#12131a",
+  "theme_color": "#14161f",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

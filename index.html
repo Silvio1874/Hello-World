@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tastenfreund – Klavier lernen</title>
+  <meta name="description" content="Klavier lernen ohne Vorkenntnisse – kostenlos, ohne Abo, ohne Anmeldung.">
+  <meta name="theme-color" content="#14161f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ START ============ -->
+  <section id="screen-home" class="screen">
+    <div class="wrap">
+      <header class="hero">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 64 64"><rect x="4" y="10" width="56" height="44" rx="8" fill="currentColor" opacity=".15"/><g fill="currentColor"><rect x="10" y="16" width="8" height="32" rx="2"/><rect x="20" y="16" width="8" height="32" rx="2"/><rect x="30" y="16" width="8" height="32" rx="2"/><rect x="40" y="16" width="8" height="32" rx="2"/></g><g fill="#14161f"><rect x="16" y="16" width="6" height="18" rx="1.5"/><rect x="26" y="16" width="6" height="18" rx="1.5"/><rect x="46" y="16" width="6" height="18" rx="1.5"/></g></svg>
+        </div>
+        <div>
+          <h1>Tastenfreund</h1>
+          <p class="muted">Klavier lernen ohne Vorkenntnisse – kostenlos, ohne Abo, ohne Anmeldung.</p>
+        </div>
+      </header>
+
+      <div class="stats" id="home-stats"></div>
+
+      <button class="cta" id="home-continue"></button>
+
+      <div class="grid">
+        <a class="card" href="#lessons">
+          <span class="card-icon">🎓</span>
+          <strong>Kurs</strong>
+          <span class="muted">Schritt für Schritt von der ersten Taste bis zu beiden Händen</span>
+        </a>
+        <a class="card" href="#songs">
+          <span class="card-icon">🎵</span>
+          <strong>Lieder</strong>
+          <span class="muted">Bekannte Melodien mit fallenden Noten spielen</span>
+        </a>
+        <a class="card" href="#free">
+          <span class="card-icon">🎹</span>
+          <strong>Freies Spiel &amp; Notenquiz</strong>
+          <span class="muted">Einfach drauflosspielen oder Tasten finden üben</span>
+        </a>
+        <a class="card" href="#settings">
+          <span class="card-icon">⚙️</span>
+          <strong>Einstellungen</strong>
+          <span class="muted">Mikrofon, MIDI-Klavier, Ton und Anzeige</span>
+        </a>
+      </div>
+
+      <div class="info">
+        <h2>So spielst du mit</h2>
+        <ul>
+          <li><b>Echtes Klavier</b>: Tippe auf 🎤, dann hört die App über das Mikrofon zu.</li>
+          <li><b>Digitalpiano / MIDI-Keyboard</b>: per USB oder Bluetooth anschließen (Chrome/Edge).</li>
+          <li><b>Ohne Klavier</b>: auf die Tasten am Bildschirm tippen oder die Computertastatur nutzen (A W S E D F T G …).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ KURS ============ -->
+  <section id="screen-lessons" class="screen">
+    <div class="wrap">
+      <header class="topbar"><a class="icon-btn" href="#home" aria-label="Zurück">←</a><h1>Kurs</h1></header>
+      <p class="muted">Jede Lektion baut auf der vorherigen auf. Mit mindestens einem Stern schaltest du die nächste frei.</p>
+      <ol class="list" id="lesson-list"></ol>
+    </div>
+  </section>
+
+  <!-- ============ LIEDER ============ -->
+  <section id="screen-songs" class="screen">
+    <div class="wrap">
+      <header class="topbar"><a class="icon-btn" href="#home" aria-label="Zurück">←</a><h1>Lieder</h1></header>
+      <div class="chips" id="song-filter">
+        <button class="chip active" data-level="0">Alle</button>
+        <button class="chip" data-level="1">Leicht</button>
+        <button class="chip" data-level="2">Mittel</button>
+        <button class="chip" data-level="3">Beide Hände</button>
+      </div>
+      <ul class="list" id="song-list"></ul>
+    </div>
+  </section>
+
+  <!-- ============ SPIELER ============ -->
+  <section id="screen-player" class="screen player">
+    <header class="player-bar">
+      <div class="row">
+        <button class="icon-btn" id="pl-back" aria-label="Zurück">←</button>
+        <div class="pl-title"><strong id="pl-title"></strong><span id="pl-sub" class="muted"></span></div>
+        <button class="icon-btn" id="pl-restart" title="Von vorne" aria-label="Von vorne">⟲</button>
+        <button class="icon-btn primary" id="pl-play" title="Start/Pause (Leertaste)" aria-label="Start/Pause">▶</button>
+      </div>
+      <div class="row controls">
+        <select id="pl-mode" title="Übungsmodus">
+          <option value="wait">Warte-Modus</option>
+          <option value="rhythm">Rhythmus-Modus</option>
+        </select>
+        <select id="pl-hands" title="Welche Hand übst du?">
+          <option value="both">Beide Hände</option>
+          <option value="R">Nur rechte Hand</option>
+          <option value="L">Nur linke Hand</option>
+        </select>
+        <label class="tempo">Tempo <input type="range" id="pl-tempo" min="30" max="150" step="5" value="100"><span id="pl-tempo-val">100%</span></label>
+        <button class="toggle" id="pl-metro" aria-pressed="false">Metronom</button>
+        <button class="toggle" id="pl-demo">👂 Vorspielen</button>
+        <button class="toggle" id="pl-mic" aria-pressed="false" title="Echtes Klavier über Mikrofon">🎤 Mikrofon</button>
+      </div>
+    </header>
+    <div class="progress"><div id="pl-progress"></div></div>
+    <div class="stage" id="pl-stage">
+      <canvas id="pl-canvas"></canvas>
+      <div class="hint" id="pl-hint"></div>
+      <div class="score" id="pl-score"></div>
+      <div class="feedback" id="pl-feedback"></div>
+      <div class="countdown" id="pl-count"></div>
+
+      <div class="overlay" id="pl-overlay" hidden>
+        <div class="dialog" id="pl-dialog"></div>
+      </div>
+    </div>
+    <div class="kb" id="pl-keyboard"></div>
+    <div class="input-status" id="pl-input"></div>
+  </section>
+
+  <!-- ============ FREIES SPIEL ============ -->
+  <section id="screen-free" class="screen player">
+    <header class="player-bar">
+      <div class="row">
+        <a class="icon-btn" href="#home" aria-label="Zurück">←</a>
+        <div class="pl-title"><strong>Freies Spiel</strong><span class="muted">Spiel einfach los</span></div>
+        <button class="toggle" id="fr-quiz">🎯 Notenquiz</button>
+      </div>
+    </header>
+    <div class="stage free-stage">
+      <div class="free-display">
+        <div class="free-note" id="fr-note">♪</div>
+        <div class="free-sub muted" id="fr-sub">Drücke eine Taste</div>
+        <div class="quiz-bar" id="fr-quizbar" hidden></div>
+      </div>
+    </div>
+    <div class="kb" id="fr-keyboard"></div>
+    <div class="input-status" id="fr-input"></div>
+  </section>
+
+  <!-- ============ EINSTELLUNGEN ============ -->
+  <section id="screen-settings" class="screen">
+    <div class="wrap">
+      <header class="topbar"><a class="icon-btn" href="#home" aria-label="Zurück">←</a><h1>Einstellungen</h1></header>
+
+      <div class="setting">
+        <div><strong>Lautstärke</strong><span class="muted">Ton der App</span></div>
+        <input type="range" id="st-volume" min="0" max="100" step="5">
+      </div>
+      <div class="setting">
+        <div><strong>Notennamen auf den Tasten</strong><span class="muted">Hilft am Anfang beim Orientieren</span></div>
+        <select id="st-labels">
+          <option value="all">Alle weißen Tasten</option>
+          <option value="c">Nur C</option>
+          <option value="none">Aus</option>
+        </select>
+      </div>
+      <div class="setting">
+        <div><strong>Computertasten anzeigen</strong><span class="muted">Zeigt z. B. „A“ auf der Taste C</span></div>
+        <input type="checkbox" id="st-keyhints" class="switch">
+      </div>
+
+      <h2>Digitalpiano / MIDI</h2>
+      <div class="setting">
+        <div><strong>MIDI-Gerät verbinden</strong><span class="muted" id="st-midi-status">Nicht verbunden</span></div>
+        <button class="btn" id="st-midi">Verbinden</button>
+      </div>
+      <div class="setting">
+        <div><strong>App-Ton bei MIDI-Eingabe</strong><span class="muted">Einschalten, wenn dein Keyboard selbst keinen Lautsprecher hat</span></div>
+        <input type="checkbox" id="st-midisound" class="switch">
+      </div>
+
+      <h2>Echtes Klavier (Mikrofon)</h2>
+      <div class="setting">
+        <div><strong>Mikrofon-Test</strong><span class="muted" id="st-mic-status">Spiele einen Ton – die App zeigt, was sie hört</span></div>
+        <button class="btn" id="st-mic">Mikrofon starten</button>
+      </div>
+      <div class="mic-meter"><div id="st-mic-level"></div><span id="st-mic-note">–</span></div>
+      <p class="muted small">Tipp: Das Mikrofon erkennt am zuverlässigsten einzelne Töne. Spiele am Anfang langsam und deutlich. Akkorde werden im Mikrofon-Modus als „richtig“ gezählt, sobald einer ihrer Töne erkannt wird.</p>
+
+      <h2>Fortschritt</h2>
+      <div class="setting">
+        <div><strong>Fortschritt zurücksetzen</strong><span class="muted">Löscht Sterne, Lektionen und Serie auf diesem Gerät</span></div>
+        <button class="btn danger" id="st-reset">Zurücksetzen</button>
+      </div>
+      <p class="muted small">Dein Fortschritt wird nur lokal in diesem Browser gespeichert. Es gibt kein Konto, keine Werbung und kein Abo.</p>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="js/music.js"></script>
+<script src="js/synth.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/keyboard.js"></script>
+<script src="js/input.js"></script>
+<script src="js/songs.js"></script>
+<script src="js/lessons.js"></script>
+<script src="js/player.js"></script>
+<script src="js/freeplay.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
