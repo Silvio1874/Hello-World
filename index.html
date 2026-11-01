@@ -187,6 +187,22 @@
         <button class="btn" id="st-mic">Mikrofon starten</button>
       </div>
       <div class="mic-meter"><div id="st-mic-level"></div><span id="st-mic-note">–</span></div>
+      <div class="setting" style="margin-top:8px">
+        <div><strong>Empfindlichkeit</strong><span class="muted">Niedrig bei lauter Umgebung, hoch bei leisem Klavier oder weit entferntem Laptop</span></div>
+        <select id="st-micsens">
+          <option value="1">Niedrig</option>
+          <option value="2">Normal</option>
+          <option value="3">Hoch</option>
+        </select>
+      </div>
+      <div class="setting">
+        <div><strong>Klavier einmessen</strong><span class="muted" id="st-tune-status"></span></div>
+        <button class="btn" id="st-tune">Einmessen</button>
+      </div>
+      <div class="setting">
+        <div><strong>Mikrofon automatisch starten</strong><span class="muted">Für echte Klaviere: Mikrofon bei jeder Übung einschalten</span></div>
+        <input type="checkbox" id="st-micauto" class="switch">
+      </div>
       <p class="muted small">Tipp: Das Mikrofon erkennt am zuverlässigsten einzelne Töne. Spiele am Anfang langsam und deutlich. Akkorde werden im Mikrofon-Modus als „richtig“ gezählt, sobald einer ihrer Töne erkannt wird.</p>
 
       <h2>Fortschritt</h2>

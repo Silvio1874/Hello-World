@@ -7,7 +7,7 @@ const Store = (() => {
     results: {},          // id -> { best, stars, plays }
     streak: 0,
     lastDay: null,
-    settings: { volume: 70, labels: 'all', keyHints: true, midiSound: false },
+    settings: { volume: 70, labels: 'all', keyHints: true, midiSound: false, micAuto: false, micSens: 2, tuning: 0 },
   });
 
   let data = defaults();

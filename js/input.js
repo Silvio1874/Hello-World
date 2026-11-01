@@ -152,7 +152,7 @@ const Input = (() => {
     const buf = new Float32Array(analyser.fftSize);
     const mic = {
       stream, analyser, buf, current: null, cand: null, candCount: 0,
-      lastRms: 0, lastTrigger: 0, level: 0, heard: null,
+      lastRms: 0, lastTrigger: 0, level: 0, heard: null, freq: null, cents: 0,
     };
     mic.timer = setInterval(() => detect(mic, ctx.sampleRate), 30);
     state.mic = mic;
@@ -177,19 +177,25 @@ const Input = (() => {
     mic.level = Math.min(1, rms * 8);
     const now = performance.now();
 
-    if (rms < 0.012) {
+    const gate = { 1: 0.025, 2: 0.012, 3: 0.006 }[Store.settings.micSens] || 0.012;
+    if (rms < gate) {
       if (mic.current !== null) { noteOff(mic.current, 'mic'); mic.current = null; }
       mic.cand = null;
       mic.lastRms = rms;
       mic.heard = null;
+      mic.freq = null;
       return;
     }
     const f = autoCorrelate(mic.buf, sr);
-    const onset = rms > mic.lastRms * 1.7 && rms > 0.03;
+    const onset = rms > mic.lastRms * 1.7 && rms > gate * 2.5;
     mic.lastRms = rms * 0.3 + mic.lastRms * 0.7;
     if (f < 50 || f > 2200) return;
-    const m = Math.round(69 + 12 * Math.log2(f / 440));
+    // Stimmung des Klaviers ausgleichen (in Cent, siehe „Klavier einmessen“)
+    const exact = 69 + 12 * Math.log2(f / 440) - (Store.settings.tuning || 0) / 100;
+    const m = Math.round(exact);
     mic.heard = m;
+    mic.freq = f;
+    mic.cents = Math.round((exact - m) * 100);
 
     if (m === mic.cand) mic.candCount++;
     else { mic.cand = m; mic.candCount = 1; }

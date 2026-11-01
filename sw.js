@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline-fähig. Bei Änderungen VERSION erhöhen. */
-const VERSION = 'tastenfreund-v1';
+const VERSION = 'tastenfreund-v2';
 const FILES = [
   './', './index.html', './css/style.css', './manifest.webmanifest', './icon.svg',
   './js/music.js', './js/synth.js', './js/storage.js', './js/keyboard.js', './js/input.js',

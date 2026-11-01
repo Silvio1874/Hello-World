@@ -33,7 +33,7 @@ const App = (() => {
     if (name === 'lessons') renderLessons();
     if (name === 'songs') renderSongs();
     if (name === 'settings') renderSettings();
-    if (name === 'free') { target = free; free.enter(); }
+    if (name === 'free') { target = free; free.enter(); autoMic(); }
     if (name === 'player') target = player;
     renderInputStatus();
     window.scrollTo(0, 0);
@@ -49,6 +49,7 @@ const App = (() => {
   function openPlayer(item, kind) {
     returnTo = kind === 'lesson' ? 'lessons' : 'songs';
     show('player');
+    autoMic();
     player.load(item, kind);
     renderInputStatus();
     if (location.hash !== '#player') location.hash = 'player';
@@ -155,6 +156,15 @@ const App = (() => {
     };
 
     $('st-mic').onclick = () => toggleMic();
+
+    const sens = $('st-micsens');
+    sens.value = s.micSens;
+    sens.onchange = () => Store.setSetting('micSens', +sens.value);
+    const ma = $('st-micauto');
+    ma.checked = s.micAuto;
+    ma.onchange = () => Store.setSetting('micAuto', ma.checked);
+    $('st-tune').onclick = () => calibrate();
+    renderTuning();
     $('st-reset').onclick = () => {
       if (confirm('Wirklich den gesamten Fortschritt löschen?')) { Store.reset(); toast('Fortschritt zurückgesetzt.'); }
     };
@@ -166,11 +176,54 @@ const App = (() => {
     if (free) free.kb.refreshLabels();
   }
 
+  function renderTuning() {
+    const c = Store.settings.tuning || 0;
+    $('st-tune-status').textContent = Math.abs(c) < 5
+      ? 'Spiele das A über dem mittleren C, falls dein Klavier verstimmt ist (aktuell: keine Korrektur)'
+      : `Ausgeglichen: dein Klavier ist ${Math.abs(c)} Cent zu ${c < 0 ? 'tief' : 'hoch'} gestimmt`;
+  }
+
+  /** Klavier einmessen: ~3 Sekunden das A4 hören und die Abweichung von 440 Hz speichern. */
+  async function calibrate() {
+    try { if (!Input.micOn) await Input.startMic(); } catch (e) { toast('Mikrofon nicht verfügbar.'); return; }
+    renderInputStatus();
+    const btn = $('st-tune');
+    btn.disabled = true;
+    toast('Spiele jetzt mehrmals das A über dem mittleren C (die weiße Taste rechts neben G) …');
+    const samples = [];
+    const t0 = performance.now();
+    await new Promise((resolve) => {
+      const iv = setInterval(() => {
+        const f = Input.micInfo && Input.micInfo.freq;
+        if (f) {
+          let c = 1200 * Math.log2(f / 440);
+          c = ((c + 600) % 1200 + 1200) % 1200 - 600; // Oktave egal
+          if (Math.abs(c) <= 100) samples.push(c);
+        }
+        btn.textContent = 'Höre zu … ' + Math.ceil((5000 - (performance.now() - t0)) / 1000);
+        if (performance.now() - t0 > 5000) { clearInterval(iv); resolve(); }
+      }, 40);
+    });
+    btn.disabled = false;
+    btn.textContent = 'Einmessen';
+    if (samples.length < 8) { toast('Kein deutliches A gehört. Bitte nochmal versuchen und etwas kräftiger spielen.'); return; }
+    samples.sort((a, b) => a - b);
+    const med = Math.round(samples[Math.floor(samples.length / 2)]);
+    Store.setSetting('tuning', Math.abs(med) < 5 ? 0 : med);
+    renderTuning();
+    toast(Math.abs(med) < 5 ? 'Dein Klavier ist gut gestimmt 👍' : 'Fertig! Abweichung von ' + med + ' Cent wird ausgeglichen.');
+  }
+
+  function autoMic() {
+    if (Store.settings.micAuto && !Input.micOn) Input.startMic().then(renderInputStatus).catch(() => {});
+  }
+
   async function toggleMic() {
     try {
-      if (Input.micOn) Input.stopMic();
+      if (Input.micOn) { Input.stopMic(); Store.setSetting('micAuto', false); }
       else {
         await Input.startMic();
+        Store.setSetting('micAuto', true);
         toast('🎤 Mikrofon aktiv – spiele auf deinem Klavier. Spiele einzelne Töne deutlich an.');
       }
     } catch (e) {

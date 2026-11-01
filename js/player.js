@@ -356,6 +356,8 @@ class Player {
           this._refreshTargets();
           return;
         }
+        // Mikrofon verwechselt manchmal den Grundton mit einem Oberton – nicht als Fehler werten
+        if (loose && group.some((ev) => [7, 19, 24].includes(midi - ev.midi))) return;
       }
       this._wrong(midi);
     } else {
