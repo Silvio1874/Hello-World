@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mein Aktien-Dashboard</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --panel: #ffffff; --text: #1b2330; --muted: #667085;
+    --line: #e3e7ee; --accent: #2f6fed; --up: #12924f; --down: #d0343a;
+    --chip: #eef2f8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10141b; --panel: #181e28; --text: #e6eaf0; --muted: #98a2b3;
+      --line: #273041; --accent: #5b8cff; --up: #3ccf7f; --down: #ff6369;
+      --chip: #212a38;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--text); }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+           padding: 14px 20px; background: var(--panel); border-bottom: 1px solid var(--line);
+           position: sticky; top: 0; z-index: 5; }
+  header h1 { font-size: 18px; margin: 0 auto 0 0; }
+  button, .btn { font: inherit; border: 1px solid var(--line); background: var(--chip); color: var(--text);
+                 padding: 7px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  input[type=password], input[type=text] { font: inherit; padding: 7px 10px; border-radius: 8px;
+         border: 1px solid var(--line); background: var(--bg); color: var(--text); width: 230px; max-width: 100%; }
+  main { padding: 18px 20px 40px; max-width: 1400px; margin: 0 auto; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .tile .label { color: var(--muted); font-size: 13px; }
+  .tile .value { font-size: 22px; font-weight: 650; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .tile .sub { font-size: 13px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .panel h2 { font-size: 15px; margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line);
+              display: flex; align-items: center; gap: 8px; }
+  .panel h2 .right { margin-left: auto; font-weight: 400; color: var(--muted); font-size: 13px; }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 9px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; cursor: pointer; user-select: none; }
+  th:first-child, td:first-child { text-align: left; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--chip); }
+  tbody tr.active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .sym { font-weight: 650; }
+  .name { color: var(--muted); font-size: 12px; display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+  .logo { width: 22px; height: 22px; border-radius: 5px; vertical-align: middle; margin-right: 8px; background: #fff; object-fit: contain; }
+  .up { color: var(--up); } .down { color: var(--down); }
+  .news { max-height: 75vh; overflow-y: auto; }
+  .news article { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; }
+  .news article img { width: 84px; height: 60px; object-fit: cover; border-radius: 6px; flex: none; background: var(--chip); }
+  .news a { color: var(--text); text-decoration: none; font-weight: 600; }
+  .news a:hover { color: var(--accent); }
+  .news .meta { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+  .news .meta .tag { background: var(--chip); padding: 1px 6px; border-radius: 5px; margin-right: 6px; font-weight: 600; color: var(--text); }
+  .news p { margin: 4px 0 0; font-size: 13px; color: var(--muted); display: -webkit-box;
+            -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .empty { padding: 28px 18px; color: var(--muted); text-align: center; }
+  .drop { border: 2px dashed var(--line); border-radius: 12px; padding: 36px 20px; text-align: center;
+          background: var(--panel); margin-bottom: 16px; }
+  .drop.over { border-color: var(--accent); }
+  .drop code { background: var(--chip); padding: 2px 6px; border-radius: 5px; }
+  .status { font-size: 13px; color: var(--muted); }
+  .err { color: var(--down); }
+  .hidden { display: none !important; }
+  details { margin-top: 12px; color: var(--muted); font-size: 13px; text-align: left; max-width: 640px; margin-inline: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📈 Mein Aktien-Dashboard</h1>
+  <input id="apiKey" type="password" placeholder="Finnhub API-Key" autocomplete="off" title="Kostenloser Key auf finnhub.io">
+  <button id="saveKey">Key speichern</button>
+  <label class="btn" for="csvInput">CSV laden</label>
+  <input id="csvInput" type="file" accept=".csv,text/csv" class="hidden">
+  <button id="refresh" class="primary">Aktualisieren</button>
+  <span id="status" class="status"></span>
+</header>
+
+<main>
+  <div id="drop" class="drop">
+    <strong>CSV-Datei hierher ziehen</strong> oder oben auf „CSV laden“ klicken.<br><br>
+    Erwartete Spalten (Reihenfolge egal, <code>;</code> oder <code>,</code> als Trenner):<br>
+    <code>Symbol</code> (Pflicht) · <code>Name</code> · <code>Anzahl</code> · <code>Kaufkurs</code><br><br>
+    <a class="btn" href="beispiel.csv" download>Beispiel-CSV herunterladen</a>
+    <details>
+      <summary>Hinweise</summary>
+      <ul>
+        <li>Kurse und Nachrichten kommen von <a href="https://finnhub.io" target="_blank" rel="noopener">finnhub.io</a>. Dort gibt es einen kostenlosen API-Key (60 Abfragen/Minute).</li>
+        <li>Symbol = Börsenkürzel, z. B. <code>AAPL</code>, <code>MSFT</code>. Der kostenlose Zugang deckt vor allem US-Börsen ab; europäische Aktien am besten über ihr US-Kürzel/ADR (z. B. <code>SAP</code>).</li>
+        <li>Zahlen dürfen deutsch geschrieben sein (<code>1.234,56</code>). Andere Spaltennamen wie <code>Ticker</code>, <code>Stück</code>, <code>Menge</code>, <code>Einstandskurs</code> werden auch erkannt.</li>
+        <li>Key und Depot werden nur lokal in deinem Browser gespeichert.</li>
+      </ul>
+    </details>
+  </div>
+
+  <section id="tiles" class="tiles hidden"></section>
+
+  <div id="layout" class="layout hidden">
+    <section class="panel">
+      <h2>Depot <span class="right" id="updated"></span></h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr>
+            <th data-k="symbol">Aktie</th>
+            <th data-k="qty">Stück</th>
+            <th data-k="buy">Kaufkurs</th>
+            <th data-k="price">Aktuell</th>
+            <th data-k="dp">Heute</th>
+            <th data-k="value">Wert</th>
+            <th data-k="pl">Gewinn/Verlust</th>
+            <th data-k="plp">G/V %</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2><span id="newsTitle">Nachrichten – alle Aktien</span>
+        <button id="allNews" class="hidden" style="margin-left:auto;padding:3px 9px;font-size:13px">Alle zeigen</button></h2>
+      <div id="news" class="news"><div class="empty">Noch keine Nachrichten geladen.</div></div>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const API = 'https://finnhub.io/api/v1';
+  const $ = id => document.getElementById(id);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
+
+  let holdings = store.get('aktien.holdings', []);   // [{symbol,name,qty,buy}]
+  let data = {};      // symbol -> {quote, profile, news}
+  let selected = null;
+  let sort = store.get('aktien.sort', { k: 'value', dir: -1 });
+  let busy = false;
+
+  $('apiKey').value = store.get('aktien.key', '');
+
+  // ---------- CSV ----------
+  function parseNum(s) {
+    if (s == null) return NaN;
+    s = String(s).trim().replace(/[€$\s]/g, '');
+    if (!s) return NaN;
+    if (s.includes(',') && s.includes('.')) {
+      s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+    } else if (s.includes(',')) s = s.replace(',', '.');
+    return parseFloat(s);
+  }
+  function splitLine(line, sep) {
+    const out = []; let cur = '', q = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { if (q && line[i + 1] === '"') { cur += '"'; i++; } else q = !q; }
+      else if (c === sep && !q) { out.push(cur); cur = ''; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out.map(x => x.trim());
+  }
+  const COLS = {
+    symbol: ['symbol', 'ticker', 'kürzel', 'kuerzel', 'code'],
+    name:   ['name', 'bezeichnung', 'unternehmen', 'firma', 'wertpapier'],
+    qty:    ['anzahl', 'stück', 'stueck', 'stk', 'menge', 'shares', 'quantity', 'qty', 'bestand'],
+    buy:    ['kaufkurs', 'einstand', 'einstandskurs', 'kaufpreis', 'preis', 'price', 'buy', 'avg', 'durchschnitt']
+  };
+  function parseCSV(text) {
+    const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
+    if (!lines.length) throw new Error('Die Datei ist leer.');
+    const h = lines[0];
+    const sep = [';', '\t', ','].sort((a, b) => h.split(b).length - h.split(a).length)[0];
+    const head = splitLine(h, sep).map(x => x.toLowerCase());
+    const idx = {};
+    for (const [k, names] of Object.entries(COLS)) idx[k] = head.findIndex(x => names.some(n => x.includes(n)));
+    if (idx.symbol < 0) throw new Error('Keine Spalte „Symbol“ (oder „Ticker“) gefunden.');
+    const map = new Map();
+    for (const line of lines.slice(1)) {
+      const c = splitLine(line, sep);
+      const symbol = (c[idx.symbol] || '').toUpperCase().trim();
+      if (!symbol) continue;
+      const qty = idx.qty >= 0 ? parseNum(c[idx.qty]) : NaN;
+      const buy = idx.buy >= 0 ? parseNum(c[idx.buy]) : NaN;
+      const prev = map.get(symbol);
+      if (prev && isFinite(qty) && isFinite(prev.qty)) {          // gleiche Aktie mehrfach -> zusammenfassen
+        const tq = prev.qty + qty;
+        if (isFinite(buy) && isFinite(prev.buy)) prev.buy = (prev.buy * prev.qty + buy * qty) / tq;
+        prev.qty = tq;
+      } else {
+        map.set(symbol, { symbol, name: idx.name >= 0 ? c[idx.name] || '' : '', qty, buy });
+      }
+    }
+    const list = [...map.values()];
+    if (!list.length) throw new Error('Keine Aktien in der Datei gefunden.');
+    return list;
+  }
+  function loadFile(file) {
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        holdings = parseCSV(r.result);
+        store.set('aktien.holdings', holdings);
+        data = {}; selected = null;
+        setStatus(`${holdings.length} Positionen geladen.`);
+        render(); refresh();
+      } catch (e) { setStatus(e.message, true); }
+    };
+    r.readAsText(file, 'utf-8');
+  }
+  $('csvInput').onchange = e => { if (e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ''; };
+  const drop = $('drop');
+  ['dragover', 'dragenter'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  document.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
+
+  // ---------- API ----------
+  const key = () => $('apiKey').value.trim();
+  $('saveKey').onclick = () => { store.set('aktien.key', key()); setStatus('Key gespeichert.'); refresh(); };
+  $('apiKey').onkeydown = e => { if (e.key === 'Enter') $('saveKey').click(); };
+
+  async function api(path, params) {
+    const u = new URL(API + path);
+    Object.entries({ ...params, token: key() }).forEach(([k, v]) => u.searchParams.set(k, v));
+    const res = await fetch(u);
+    if (res.status === 401 || res.status === 403) throw new Error('API-Key ungültig oder Börse im Gratis-Tarif nicht enthalten.');
+    if (res.status === 429) throw new Error('Abfragelimit erreicht – bitte kurz warten.');
+    if (!res.ok) throw new Error('Fehler ' + res.status);
+    return res.json();
+  }
+  const ymd = d => d.toISOString().slice(0, 10);
+
+  async function refresh(withNews = true) {
+    if (busy || !holdings.length) return;
+    if (!key()) { setStatus('Bitte zuerst einen Finnhub API-Key eintragen.', true); return; }
+    busy = true; $('refresh').disabled = true;
+    const to = new Date(), from = new Date(Date.now() - 7 * 864e5);
+    let errors = 0, lastErr = '';
+    for (let i = 0; i < holdings.length; i++) {
+      const s = holdings[i].symbol;
+      setStatus(`Lade ${s} (${i + 1}/${holdings.length}) …`);
+      const d = data[s] || (data[s] = {});
+      try {
+        const jobs = [api('/quote', { symbol: s }).then(q => { d.quote = q && q.c ? q : null; })];
+        if (!d.profile) jobs.push(api('/stock/profile2', { symbol: s }).then(p => { d.profile = p || {}; }).catch(() => { d.profile = {}; }));
+        if (withNews) jobs.push(api('/company-news', { symbol: s, from: ymd(from), to: ymd(to) })
+                        .then(n => { d.news = Array.isArray(n) ? n.slice(0, 25) : []; }).catch(() => {}));
+        await Promise.all(jobs);
+        if (!d.quote) { errors++; lastErr = `Kein Kurs für ${s} gefunden.`; }
+      } catch (e) { errors++; lastErr = e.message; }
+      render(false);
+    }
+    busy = false; $('refresh').disabled = false;
+    $('updated').textContent = 'Stand: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    setStatus(errors ? `${errors} Fehler – ${lastErr}` : 'Alles aktuell.', !!errors);
+    render();
+  }
+  $('refresh').onclick = () => refresh(true);
+  // Kurse jede Minute, Nachrichten alle 10 Minuten automatisch aktualisieren
+  let tick = 0;
+  setInterval(() => { if (document.visibilityState === 'visible') refresh(++tick % 10 === 0); }, 60000);
+
+  // ---------- Darstellung ----------
+  const fmt = (n, cur, d = 2) => !isFinite(n) ? '–' :
+    n.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d }) + (cur ? ' ' + cur : '');
+  const pct = n => !isFinite(n) ? '–' : (n > 0 ? '+' : '') + fmt(n) + ' %';
+  const cls = n => !isFinite(n) || n === 0 ? '' : n > 0 ? 'up' : 'down';
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function setStatus(msg, err) { const el = $('status'); el.textContent = msg; el.className = 'status' + (err ? ' err' : ''); }
+
+  function rowsData() {
+    return holdings.map(h => {
+      const d = data[h.symbol] || {}, q = d.quote, p = d.profile || {};
+      const price = q ? q.c : NaN, qty = isFinite(h.qty) ? h.qty : NaN;
+      const value = price * qty, cost = h.buy * qty;
+      return { ...h, name: h.name || p.name || '', logo: p.logo, cur: p.currency || '',
+        price, dp: q ? q.dp : NaN, dayAbs: q ? q.d * qty : NaN,
+        value, cost, pl: value - cost, plp: (price / h.buy - 1) * 100 };
+    });
+  }
+
+  function render(full = true) {
+    const has = holdings.length > 0;
+    $('drop').classList.toggle('hidden', has);
+    $('tiles').classList.toggle('hidden', !has);
+    $('layout').classList.toggle('hidden', !has);
+    if (!has) return;
+
+    const rows = rowsData();
+    // Kacheln (je Währung summiert)
+    const byCur = {};
+    rows.forEach(r => {
+      const c = r.cur || '?', t = byCur[c] || (byCur[c] = { value: 0, cost: 0, day: 0, n: 0 });
+      if (isFinite(r.value)) { t.value += r.value; t.n++; if (isFinite(r.dayAbs)) t.day += r.dayAbs; if (isFinite(r.cost)) t.cost += r.cost; }
+    });
+    const curs = Object.entries(byCur).filter(([, t]) => t.n);
+    const line = f => curs.length ? curs.map(f).join('<br>') : '–';
+    const best = rows.filter(r => isFinite(r.dp)).sort((a, b) => b.dp - a.dp);
+    $('tiles').innerHTML = `
+      <div class="tile"><div class="label">Depotwert</div><div class="value">${line(([c, t]) => fmt(t.value, c))}</div></div>
+      <div class="tile"><div class="label">Heute</div><div class="value">${line(([c, t]) =>
+        `<span class="${cls(t.day)}">${t.day > 0 ? '+' : ''}${fmt(t.day, c)}</span>`)}</div>
+        <div class="sub">${line(([c, t]) => `<span class="${cls(t.day)}">${pct(t.day / (t.value - t.day) * 100)}</span>`)}</div></div>
+      <div class="tile"><div class="label">Gewinn/Verlust gesamt</div><div class="value">${line(([c, t]) =>
+        t.cost ? `<span class="${cls(t.value - t.cost)}">${t.value - t.cost > 0 ? '+' : ''}${fmt(t.value - t.cost, c)}</span>` : '–')}</div>
+        <div class="sub">${line(([c, t]) => t.cost ? `<span class="${cls(t.value - t.cost)}">${pct((t.value / t.cost - 1) * 100)}</span>` : '')}</div></div>
+      <div class="tile"><div class="label">Bester / schwächster Wert heute</div>
+        <div class="sub" style="margin-top:8px">${best.length ? `<b>${esc(best[0].symbol)}</b> <span class="${cls(best[0].dp)}">${pct(best[0].dp)}</span>` : '–'}</div>
+        <div class="sub">${best.length > 1 ? `<b>${esc(best.at(-1).symbol)}</b> <span class="${cls(best.at(-1).dp)}">${pct(best.at(-1).dp)}</span>` : ''}</div></div>`;
+
+    // Tabelle
+    rows.sort((a, b) => {
+      const x = a[sort.k], y = b[sort.k];
+      if (typeof x === 'string') return x.localeCompare(y) * sort.dir;
+      return ((isFinite(x) ? x : -Infinity) - (isFinite(y) ? y : -Infinity)) * sort.dir;
+    });
+    document.querySelectorAll('th').forEach(th => {
+      th.textContent = th.textContent.replace(/ [▲▼]$/, '') + (th.dataset.k === sort.k ? (sort.dir > 0 ? ' ▲' : ' ▼') : '');
+    });
+    $('rows').innerHTML = rows.map(r => `
+      <tr data-s="${esc(r.symbol)}" class="${r.symbol === selected ? 'active' : ''}">
+        <td>${r.logo ? `<img class="logo" src="${esc(r.logo)}" alt="" loading="lazy">` : ''}<span class="sym">${esc(r.symbol)}</span>
+            <span class="name" style="display:inline-block;vertical-align:middle;margin-left:6px">${esc(r.name)}</span></td>
+        <td>${fmt(r.qty, '', r.qty % 1 ? 3 : 0)}</td>
+        <td>${fmt(r.buy, r.cur)}</td>
+        <td><b>${fmt(r.price, r.cur)}</b></td>
+        <td class="${cls(r.dp)}">${pct(r.dp)}</td>
+        <td>${fmt(r.value, r.cur)}</td>
+        <td class="${cls(r.pl)}">${isFinite(r.pl) ? (r.pl > 0 ? '+' : '') + fmt(r.pl, r.cur) : '–'}</td>
+        <td class="${cls(r.plp)}">${pct(r.plp)}</td>
+      </tr>`).join('');
+
+    if (full || !selected) renderNews();
+  }
+
+  function renderNews() {
+    const syms = selected ? [selected] : holdings.map(h => h.symbol);
+    $('newsTitle').textContent = selected ? `Nachrichten – ${selected}` : 'Nachrichten – alle Aktien';
+    $('allNews').classList.toggle('hidden', !selected);
+    const seen = new Set();
+    const items = syms.flatMap(s => ((data[s] || {}).news || []).map(n => ({ ...n, sym: s })))
+      .filter(n => n.headline && !seen.has(n.headline) && seen.add(n.headline))
+      .sort((a, b) => b.datetime - a.datetime)
+      .slice(0, 80);
+    $('news').innerHTML = items.length ? items.map(n => `
+      <article>
+        ${n.image ? `<img src="${esc(n.image)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+        <div>
+          <div class="meta"><span class="tag">${esc(n.sym)}</span>${esc(n.source)} · ${new Date(n.datetime * 1000).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+          <a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.headline)}</a>
+          ${n.summary ? `<p>${esc(n.summary)}</p>` : ''}
+        </div>
+      </article>`).join('')
+      : `<div class="empty">${key() ? 'Keine Nachrichten der letzten 7 Tage gefunden.' : 'API-Key eintragen, um Nachrichten zu laden.'}</div>`;
+  }
+
+  $('rows').onclick = e => {
+    const tr = e.target.closest('tr'); if (!tr) return;
+    selected = selected === tr.dataset.s ? null : tr.dataset.s;
+    render();
+  };
+  $('allNews').onclick = () => { selected = null; render(); };
+  document.querySelector('thead').onclick = e => {
+    const k = e.target.closest('th')?.dataset.k; if (!k) return;
+    sort = { k, dir: sort.k === k ? -sort.dir : (k === 'symbol' ? 1 : -1) };
+    store.set('aktien.sort', sort); render(false);
+  };
+
+  render();
+  if (holdings.length && key()) refresh();
+})();
+</script>
+</body>
+</html>

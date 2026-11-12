@@ -70,3 +70,15 @@ js/freeplay.js      Freies Spiel & Notenquiz
 js/app.js           Navigation, Einstellungen
 sw.js               Offline-Cache (Service Worker)
 ```
+
+---
+
+## 📈 Aktien-Dashboard (`aktien/`)
+
+Eine eigene Seite unter `aktien/index.html`: Depot per CSV laden und aktuelle Kurse, Tagesänderung, Gewinn/Verlust und Nachrichten der letzten 7 Tage ansehen.
+
+1. Kostenlosen API-Key auf [finnhub.io](https://finnhub.io) holen und oben eintragen.
+2. CSV mit den Spalten `Symbol;Name;Anzahl;Kaufkurs` laden (Vorlage: `aktien/beispiel.csv`).
+3. Auf eine Aktie klicken, um nur ihre Nachrichten zu sehen. Kurse aktualisieren sich jede Minute.
+
+Key und Depot bleiben lokal im Browser.
