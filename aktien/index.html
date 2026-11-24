@@ -89,6 +89,18 @@
   .step.done { border-color: var(--up); }
   .step.done h3::after { content: " ✓"; color: var(--up); }
   .loading { color: var(--muted); font-style: italic; }
+  .edit { padding: 2px 7px; font-size: 12px; margin-left: 6px; vertical-align: middle; }
+  .warn { background: color-mix(in srgb, var(--down) 15%, var(--panel)); color: var(--down); border-color: var(--down); }
+  #fix { margin-bottom: 16px; }
+  #fix .body { padding: 14px 16px; }
+  #fix .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+  #fix input[type=text] { flex: 1 1 220px; width: auto; }
+  #fixList { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 8px; }
+  #fixList li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  #fixList li:last-child { border-bottom: 0; }
+  #fixList li .d { flex: 1; min-width: 0; }
+  #fixList li small { color: var(--muted); display: block; }
+  #fixList li.empty { color: var(--muted); justify-content: center; }
   details { margin-top: 12px; color: var(--muted); font-size: 13px; text-align: left; max-width: 640px; margin-inline: auto; }
 </style>
 </head>
@@ -143,6 +155,24 @@
       </ul>
     </details>
   </div>
+
+  <section id="fix" class="panel hidden">
+    <h2>Börsenkürzel korrigieren: <span id="fixWhat"></span>
+      <button id="fixClose" style="margin-left:auto;padding:3px 9px;font-size:13px">Schließen</button></h2>
+    <div class="body">
+      <p style="margin:0 0 10px;color:var(--muted);font-size:14px">Gib den Firmennamen ein (z. B. <i>BASF</i> oder <i>Allianz</i>) und klicke auf „Suchen“. Dann den passenden Treffer übernehmen.
+        Tipp: Der kostenlose Finnhub-Zugang liefert Kurse vor allem für US-Börsen. Deutsche Aktien funktionieren meist über ihr US-Kürzel (oft mit „Y“ oder „F“ am Ende, z. B. <i>BASFY</i>, <i>ALIZY</i>).</p>
+      <div class="row">
+        <input id="fixQuery" type="text" placeholder="Firmenname, ISIN oder Kürzel">
+        <button id="fixSearch" class="primary">Suchen</button>
+      </div>
+      <ul id="fixList"></ul>
+      <div class="row" style="margin-top:12px">
+        <input id="fixManual" type="text" placeholder="oder Kürzel direkt eintippen, z. B. AAPL" style="text-transform:uppercase">
+        <button id="fixSave">Dieses Kürzel nehmen</button>
+      </div>
+    </div>
+  </section>
 
   <section id="tiles" class="tiles hidden"></section>
 
@@ -381,7 +411,7 @@
     store.set('aktien.holdings', holdings);
     for (let i = 0; i < holdings.length; i++) {
       const s = holdings[i].symbol;
-      if (!s) { errors++; lastErr = `Kein Börsenkürzel für ${label(holdings[i])} gefunden – bitte Symbol in der CSV ergänzen.`; continue; }
+      if (!s) { errors++; lastErr = `Für ${label(holdings[i])} wurde kein Börsenkürzel gefunden. Bitte bei der Aktie auf „Kürzel prüfen“ klicken.`; continue; }
       setStatus(`Lade Kurs${withNews ? ' und Nachrichten' : ''} für ${s} (${i + 1} von ${holdings.length}) …`, 'busy');
       progress((i + 0.5) / holdings.length);
       const d = data[s] || (data[s] = {});
@@ -391,9 +421,10 @@
         if (withNews) jobs.push(api('/company-news', { symbol: s, from: ymd(from), to: ymd(to) })
                         .then(n => { d.news = Array.isArray(n) ? n.slice(0, 25) : []; }).catch(() => {}));
         await Promise.all(jobs);
-        if (!d.quote) { errors++; lastErr = `Für ${s} wurde kein Kurs gefunden. Ist das Börsenkürzel richtig?`; }
+        d.tried = true;
+        if (!d.quote) { errors++; lastErr = `Für ${s} wurde kein Kurs gefunden. Bitte bei der Aktie auf „Kürzel prüfen“ klicken und das richtige Kürzel suchen.`; }
       } catch (e) {
-        errors++; lastErr = e.message;
+        d.tried = true; errors++; lastErr = e.message;
         if (/API-Key ist falsch|Keine Verbindung/.test(e.message)) { if (/API-Key/.test(e.message)) keyOk = false; break; }
       }
       render(false);
@@ -433,11 +464,11 @@
   }
 
   function rowsData() {
-    return holdings.map(h => {
+    return holdings.map((h, idx) => {
       const d = data[h.symbol] || {}, q = d.quote, p = d.profile || {};
       const price = q ? q.c : NaN, qty = isFinite(h.qty) ? h.qty : NaN;
       const value = price * qty, cost = h.buy * qty;
-      return { ...h, symbol: label(h), name: h.name || p.name || '', logo: p.logo, cur: p.currency || '',
+      return { ...h, idx, missing: !busy && !q && (d.tried || !h.symbol), symbol: label(h), name: h.name || p.name || '', logo: p.logo, cur: p.currency || '',
         price, dp: q ? q.dp : NaN, dayAbs: q ? q.d * qty : NaN,
         value, cost, pl: value - cost, plp: (price / h.buy - 1) * 100 };
     });
@@ -489,7 +520,9 @@
     });
     $('rows').innerHTML = rows.map(r => `
       <tr data-s="${esc(r.symbol)}" class="${r.symbol === selected ? 'active' : ''}">
-        <td>${r.logo ? `<img class="logo" src="${esc(r.logo)}" alt="" loading="lazy">` : ''}<span class="sym">${esc(r.symbol)}</span>
+        <td>${r.logo ? `<img class="logo" src="${esc(r.logo)}" alt="" loading="lazy">` : ''}<span class="sym">${esc(r.symbol)}</span>${r.missing
+              ? `<button class="edit warn" data-fix="${r.idx}" title="Für dieses Kürzel gibt es keinen Kurs">⚠ Kürzel prüfen</button>`
+              : `<button class="edit" data-fix="${r.idx}" title="Börsenkürzel ändern">✏️</button>`}
             <span class="name" style="display:inline-block;vertical-align:middle;margin-left:6px">${esc(r.name)}</span></td>
         <td>${fmt(r.qty, '', r.qty % 1 ? 3 : 0)}</td>
         <td>${fmt(r.buy, r.cur)}</td>
@@ -525,6 +558,8 @@
   }
 
   $('rows').onclick = e => {
+    const fb = e.target.closest('[data-fix]');
+    if (fb) { openFix(+fb.dataset.fix); return; }
     const tr = e.target.closest('tr'); if (!tr) return;
     selected = selected === tr.dataset.s ? null : tr.dataset.s;
     render();
@@ -535,6 +570,60 @@
     sort = { k, dir: sort.k === k ? -sort.dir : (k === 'symbol' ? 1 : -1) };
     store.set('aktien.sort', sort); render(false);
   };
+
+  // ---------- Kürzel korrigieren ----------
+  let fixIdx = -1;
+  function openFix(i) {
+    fixIdx = i; const h = holdings[i];
+    $('fixWhat').textContent = [h.name, label(h)].filter(Boolean).join(' · ');
+    $('fixQuery').value = h.name || h.isin || h.wkn || h.symbol || '';
+    $('fixManual').value = '';
+    $('fixList').innerHTML = '';
+    $('fix').classList.remove('hidden');
+    $('fix').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (key() && $('fixQuery').value) searchFix();
+  }
+  $('fixClose').onclick = () => { $('fix').classList.add('hidden'); fixIdx = -1; };
+  $('fixQuery').onkeydown = e => { if (e.key === 'Enter') searchFix(); };
+  $('fixManual').onkeydown = e => { if (e.key === 'Enter') $('fixSave').click(); };
+  $('fixSearch').onclick = () => searchFix();
+  $('fixSave').onclick = () => { const v = $('fixManual').value.trim().toUpperCase(); if (v) applyFix(v, ''); };
+  async function searchFix() {
+    const q = $('fixQuery').value.trim();
+    if (!q) return;
+    if (!key()) { setStatus('Bitte zuerst den API-Key eintragen.', true); return; }
+    $('fixList').innerHTML = '<li class="empty"><span class="spin"></span>&nbsp; Suche bei Finnhub …</li>';
+    try {
+      const r = await api('/search', { q });
+      const list = (r && r.result || []).filter(x => x.symbol)
+        .sort((a, b) => a.symbol.includes('.') - b.symbol.includes('.')).slice(0, 12);
+      $('fixList').innerHTML = list.length ? list.map(x => `
+        <li><div class="d"><b>${esc(x.symbol)}</b> ${esc(x.description || '')}
+          <small>${esc(x.type || '')}${x.symbol.includes('.') ? ' · ausländische Börse, im Gratis-Tarif meist ohne Kurs' : ' · US-Börse, funktioniert im Gratis-Tarif'}</small></div>
+          <button data-pick="${esc(x.symbol)}" data-name="${esc(x.description || '')}" ${x.symbol.includes('.') ? '' : 'class="primary"'}>Übernehmen</button></li>`).join('')
+        : '<li class="empty">Nichts gefunden. Versuch einen kürzeren Namen, z. B. nur „Allianz“.</li>';
+    } catch (e) { $('fixList').innerHTML = `<li class="empty err">${esc(e.message)}</li>`; }
+  }
+  $('fixList').onclick = e => { const b = e.target.closest('[data-pick]'); if (b) applyFix(b.dataset.pick, b.dataset.name); };
+  async function applyFix(sym, desc) {
+    if (fixIdx < 0) return;
+    const h = holdings[fixIdx];
+    h.symbol = sym; delete h.unresolved;
+    if (!h.name && desc) h.name = desc;
+    store.set('aktien.holdings', holdings);
+    $('fix').classList.add('hidden');
+    setStatus(`Prüfe ${sym} …`, 'busy');
+    const d = data[sym] = {};
+    try {
+      const q = await api('/quote', { symbol: sym });
+      d.quote = q && q.c ? q : null; d.tried = true;
+      api('/stock/profile2', { symbol: sym }).then(p => { d.profile = p || {}; render(false); }).catch(() => {});
+      const to = new Date(), from = new Date(Date.now() - 7 * 864e5);
+      api('/company-news', { symbol: sym, from: ymd(from), to: ymd(to) }).then(n => { d.news = Array.isArray(n) ? n.slice(0, 25) : []; render(); }).catch(() => {});
+      setStatus(d.quote ? `✓ ${sym} gespeichert, Kurs: ${fmt(d.quote.c)}` : `${sym} gespeichert, aber Finnhub liefert dafür keinen Kurs. Bitte ein anderes Kürzel probieren (am besten eines ohne Punkt).`, d.quote ? 'ok' : true);
+    } catch (e) { d.tried = true; setStatus(`${sym}: ${e.message}`, true); }
+    render();
+  }
 
   render();
   if (holdings.length && key()) refresh();
