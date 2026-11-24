@@ -71,28 +71,68 @@
   .status { font-size: 13px; color: var(--muted); }
   .err { color: var(--down); }
   .hidden { display: none !important; }
+  .banner { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px;
+            background: var(--panel); border: 1px solid var(--line); font-weight: 500; }
+  .banner.ok { border-color: var(--up); background: color-mix(in srgb, var(--up) 10%, var(--panel)); }
+  .banner.err { border-color: var(--down); background: color-mix(in srgb, var(--down) 10%, var(--panel)); color: var(--text); }
+  .banner.busy { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+  .spin { width: 16px; height: 16px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%;
+          animation: spin .8s linear infinite; flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .bar { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent); z-index: 10; transition: width .3s; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .step { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .step h3 { margin: 0 0 6px; font-size: 16px; }
+  .step p { margin: 0 0 10px; color: var(--muted); font-size: 14px; }
+  .step .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .step input[type=password], .step input[type=text] { width: 100%; }
+  .step.done { border-color: var(--up); }
+  .step.done h3::after { content: " ✓"; color: var(--up); }
+  .loading { color: var(--muted); font-style: italic; }
   details { margin-top: 12px; color: var(--muted); font-size: 13px; text-align: left; max-width: 640px; margin-inline: auto; }
 </style>
 </head>
 <body>
 <header>
   <h1>📈 Mein Aktien-Dashboard</h1>
-  <input id="apiKey" type="password" placeholder="Finnhub API-Key" autocomplete="off" title="Kostenloser Key auf finnhub.io">
-  <button id="saveKey">Key speichern</button>
+  <button id="changeKey" class="hidden">🔑 API-Key ändern</button>
   <label class="btn" for="csvInput">CSV laden</label>
-  <input id="csvInput" type="file" class="hidden">
+  <input id="csvInput" type="file" accept=".csv,.txt,text/csv" class="hidden">
   <button id="refresh" class="primary">Aktualisieren</button>
-  <span id="status" class="status"></span>
 </header>
+<div id="bar" class="bar" style="width:0"></div>
 
 <main>
+  <div id="banner" class="banner hidden"><span id="spin" class="spin hidden"></span><span id="status"></span></div>
+
+  <div id="steps" class="steps">
+    <div class="step" id="step1">
+      <h3>Schritt 1: API-Key eintragen</h3>
+      <p>Den kostenlosen Schlüssel findest du nach der Anmeldung auf
+        <a href="https://finnhub.io/dashboard" target="_blank" rel="noopener">finnhub.io/dashboard</a> unter „API Key“.
+        Einfach kopieren und hier einfügen.</p>
+      <div class="row">
+        <input id="apiKey" type="password" placeholder="z. B. d1abc23def45…" autocomplete="off" spellcheck="false">
+        <button id="saveKey" class="primary">Key prüfen und speichern</button>
+        <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="showKey"> Key anzeigen</label>
+      </div>
+    </div>
+    <div class="step" id="step2">
+      <h3>Schritt 2: Depot laden</h3>
+      <p>Lade deine CSV-Datei mit deinen Aktien. Zum Ausprobieren kannst du auch das Beispieldepot nehmen.</p>
+      <div class="row">
+        <label class="btn primary" for="csvInput" style="background:var(--accent);color:#fff;border-color:var(--accent)">CSV-Datei auswählen</label>
+        <button id="demo">Beispieldepot ausprobieren</button>
+      </div>
+    </div>
+  </div>
+
   <div id="drop" class="drop">
     <strong>CSV-Datei hierher ziehen</strong> oder oben auf „CSV laden“ klicken.<br><br>
     Erwartete Spalten (Reihenfolge egal, <code>;</code> oder <code>,</code> als Trenner):<br>
     <code>Symbol</code> oder <code>ISIN</code>/<code>WKN</code> (Pflicht) · <code>Name</code> · <code>Anzahl</code> · <code>Kaufkurs</code><br><br>
     <div id="dropErr" class="err" style="margin-bottom:12px"></div>
-    <label class="btn primary" for="csvInput" style="background:var(--accent);color:#fff;border-color:var(--accent)">CSV-Datei auswählen</label>
-    <a class="btn" href="beispiel.csv" download>Beispiel-CSV herunterladen</a>
+    <button id="dlExample">Beispiel-CSV herunterladen</button>
     <details>
       <summary>Hinweise</summary>
       <ul>
@@ -149,7 +189,9 @@
   let sort = store.get('aktien.sort', { k: 'value', dir: -1 });
   let busy = false;
 
+  const EXAMPLE_CSV = 'Symbol;Name;Anzahl;Kaufkurs\nAAPL;Apple;10;150,00\nMSFT;Microsoft;5;310,50\nNVDA;NVIDIA;8;95,20\nAMZN;Amazon;6;128,00\nSAP;SAP (ADR);4;140,00\n';
   $('apiKey').value = store.get('aktien.key', '');
+  let keyOk = !!$('apiKey').value;
 
   // ---------- CSV ----------
   function parseNum(s) {
@@ -248,6 +290,19 @@
     catch { return new TextDecoder('windows-1252').decode(buf); }               // typisch für Excel unter Windows
   }
   function showError(msg) { setStatus(msg, true); $('dropErr').textContent = msg; }
+  function useHoldings(list, source) {
+    holdings = list;
+    store.set('aktien.holdings', holdings);
+    data = {}; selected = null;
+    setStatus(`${holdings.length} Aktien aus ${source} geladen.`, 'ok');
+    render(); refresh();
+  }
+  $('demo').onclick = () => useHoldings(parseCSV(EXAMPLE_CSV), 'dem Beispieldepot');
+  $('dlExample').onclick = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\ufeff' + EXAMPLE_CSV], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'beispiel.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
   function loadFile(file) {
     $('dropErr').textContent = '';
     setStatus('Lese ' + file.name + ' …');
@@ -255,11 +310,7 @@
     r.onerror = () => showError('Die Datei konnte nicht gelesen werden.');
     r.onload = () => {
       try {
-        holdings = parseCSV(decode(r.result));
-        store.set('aktien.holdings', holdings);
-        data = {}; selected = null;
-        setStatus(`${holdings.length} Positionen geladen.`);
-        render(); refresh();
+        useHoldings(parseCSV(decode(r.result)), file.name);
       } catch (e) { showError(e.message); }
     };
     r.readAsArrayBuffer(file);
@@ -272,29 +323,54 @@
 
   // ---------- API ----------
   const key = () => $('apiKey').value.trim();
-  $('saveKey').onclick = () => { store.set('aktien.key', key()); setStatus('Key gespeichert.'); refresh(); };
+  $('showKey').onchange = e => { $('apiKey').type = e.target.checked ? 'text' : 'password'; };
+  $('changeKey').onclick = () => { $('steps').classList.remove('hidden'); $('step2').classList.add('hidden'); $('apiKey').focus(); };
   $('apiKey').onkeydown = e => { if (e.key === 'Enter') $('saveKey').click(); };
+  $('saveKey').onclick = async () => {
+    // Leerzeichen und Zeilenumbrüche beim Kopieren entfernen
+    $('apiKey').value = key().replace(/\s+/g, '');
+    if (!key()) { setStatus('Bitte zuerst den API-Key in das Feld einfügen.', true); $('apiKey').focus(); return; }
+    const btn = $('saveKey');
+    btn.disabled = true; btn.textContent = 'Prüfe …';
+    setStatus('Prüfe deinen API-Key bei Finnhub …', 'busy');
+    try {
+      const q = await api('/quote', { symbol: 'AAPL' });
+      if (!q || typeof q.c !== 'number') throw new Error('Finnhub hat eine unerwartete Antwort geschickt. Ist der Key vollständig kopiert?');
+      store.set('aktien.key', key()); keyOk = true;
+      setStatus(holdings.length ? '✓ Der Key funktioniert. Kurse werden jetzt geladen …'
+                                : '✓ Der Key funktioniert und ist gespeichert. Jetzt Schritt 2: Depot laden.', 'ok');
+      render(); refresh();
+    } catch (e) {
+      keyOk = false;
+      setStatus(e.message, true);
+    } finally { btn.disabled = false; btn.textContent = 'Key prüfen und speichern'; }
+  };
 
   async function api(path, params) {
     const u = new URL(API + path);
     Object.entries({ ...params, token: key() }).forEach(([k, v]) => u.searchParams.set(k, v));
-    const res = await fetch(u);
-    if (res.status === 401 || res.status === 403) throw new Error('API-Key ungültig oder Börse im Gratis-Tarif nicht enthalten.');
-    if (res.status === 429) throw new Error('Abfragelimit erreicht – bitte kurz warten.');
-    if (!res.ok) throw new Error('Fehler ' + res.status);
+    let res;
+    try { res = await fetch(u); }
+    catch { throw new Error('Keine Verbindung zu Finnhub. Bitte Internetverbindung prüfen. (Werbeblocker oder Firmen-Netzwerk können die Seite auch blockieren.)'); }
+    if (res.status === 401) throw new Error('Der API-Key ist falsch. Bitte auf finnhub.io/dashboard nachsehen und den Key komplett neu kopieren.');
+    if (res.status === 403) throw new Error('Diese Aktie oder Börse ist im kostenlosen Finnhub-Tarif nicht enthalten. Tipp: das US-Kürzel verwenden (z. B. SAP statt SAP.DE).');
+    if (res.status === 429) throw new Error('Zu viele Abfragen auf einmal (Gratis-Limit: 60 pro Minute). Bitte eine Minute warten und dann „Aktualisieren“ klicken.');
+    if (!res.ok) throw new Error('Finnhub meldet einen Fehler (Code ' + res.status + '). Bitte später nochmal versuchen.');
     return res.json();
   }
   const ymd = d => d.toISOString().slice(0, 10);
 
-  async function refresh(withNews = true) {
-    if (busy || !holdings.length) return;
-    if (!key()) { setStatus('Bitte zuerst einen Finnhub API-Key eintragen.', true); return; }
-    busy = true; $('refresh').disabled = true;
+  async function refresh(withNews = true, manual = false) {
+    if (busy) return;
+    if (!key()) { setStatus('Bitte zuerst in Schritt 1 deinen Finnhub API-Key eintragen.', true); render(); return; }
+    if (!holdings.length) { if (manual) setStatus('Noch keine Aktien geladen. Bitte in Schritt 2 eine CSV-Datei wählen oder das Beispieldepot nehmen.', true); return; }
+    busy = true; $('refresh').disabled = true; $('refresh').textContent = 'Lädt …';
+    progress(0.03); render(false);
     const to = new Date(), from = new Date(Date.now() - 7 * 864e5);
     let errors = 0, lastErr = '';
     // ISIN/WKN ohne Kürzel über die Finnhub-Suche in ein Börsenkürzel umwandeln
     for (const h of holdings.filter(h => !h.symbol && !h.unresolved)) {
-      setStatus(`Suche Kürzel für ${h.isin || h.wkn} …`);
+      setStatus(`Suche Börsenkürzel für ${h.isin || h.wkn} …`, 'busy');
       try {
         const r = await api('/search', { q: h.isin || h.wkn });
         const list = (r && r.result || []).filter(x => x.symbol);
@@ -306,7 +382,8 @@
     for (let i = 0; i < holdings.length; i++) {
       const s = holdings[i].symbol;
       if (!s) { errors++; lastErr = `Kein Börsenkürzel für ${label(holdings[i])} gefunden – bitte Symbol in der CSV ergänzen.`; continue; }
-      setStatus(`Lade ${s} (${i + 1}/${holdings.length}) …`);
+      setStatus(`Lade Kurs${withNews ? ' und Nachrichten' : ''} für ${s} (${i + 1} von ${holdings.length}) …`, 'busy');
+      progress((i + 0.5) / holdings.length);
       const d = data[s] || (data[s] = {});
       try {
         const jobs = [api('/quote', { symbol: s }).then(q => { d.quote = q && q.c ? q : null; })];
@@ -314,19 +391,32 @@
         if (withNews) jobs.push(api('/company-news', { symbol: s, from: ymd(from), to: ymd(to) })
                         .then(n => { d.news = Array.isArray(n) ? n.slice(0, 25) : []; }).catch(() => {}));
         await Promise.all(jobs);
-        if (!d.quote) { errors++; lastErr = `Kein Kurs für ${s} gefunden.`; }
-      } catch (e) { errors++; lastErr = e.message; }
+        if (!d.quote) { errors++; lastErr = `Für ${s} wurde kein Kurs gefunden. Ist das Börsenkürzel richtig?`; }
+      } catch (e) {
+        errors++; lastErr = e.message;
+        if (/API-Key ist falsch|Keine Verbindung/.test(e.message)) { if (/API-Key/.test(e.message)) keyOk = false; break; }
+      }
       render(false);
     }
-    busy = false; $('refresh').disabled = false;
-    $('updated').textContent = 'Stand: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    setStatus(errors ? `${errors} Fehler – ${lastErr}` : 'Alles aktuell.', !!errors);
+    busy = false; $('refresh').disabled = false; $('refresh').textContent = 'Aktualisieren'; progress(1);
+    const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    $('updated').textContent = 'Stand: ' + now + ' Uhr';
+    const ok = holdings.filter(h => data[h.symbol] && data[h.symbol].quote).length;
+    if (!errors) setStatus(`✓ Fertig: Kurse für alle ${ok} Aktien geladen (Stand ${now} Uhr). Wird jede Minute automatisch aktualisiert.`, 'ok');
+    else if (ok) setStatus(`${ok} von ${holdings.length} Aktien geladen. Problem: ${lastErr}`, true);
+    else setStatus(lastErr, true);
     render();
   }
-  $('refresh').onclick = () => refresh(true);
+  $('refresh').onclick = () => refresh(true, true);
   // Kurse jede Minute, Nachrichten alle 10 Minuten automatisch aktualisieren
   let tick = 0;
-  setInterval(() => { if (document.visibilityState === 'visible') refresh(++tick % 10 === 0); }, 60000);
+  setInterval(() => { if (document.visibilityState === 'visible' && keyOk && holdings.length) refresh(++tick % 10 === 0); }, 60000);
+  let barTimer;
+  function progress(f) {
+    const b = $('bar'); clearTimeout(barTimer);
+    b.style.opacity = 1; b.style.width = Math.round(f * 100) + '%';
+    if (f >= 1) barTimer = setTimeout(() => { b.style.opacity = 0; b.style.width = '0'; }, 600);
+  }
 
   // ---------- Darstellung ----------
   const fmt = (n, cur, d = 2) => !isFinite(n) ? '–' :
@@ -334,7 +424,13 @@
   const pct = n => !isFinite(n) ? '–' : (n > 0 ? '+' : '') + fmt(n) + ' %';
   const cls = n => !isFinite(n) || n === 0 ? '' : n > 0 ? 'up' : 'down';
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  function setStatus(msg, err) { const el = $('status'); el.textContent = msg; el.className = 'status' + (err ? ' err' : ''); }
+  // kind: true = Fehler, 'ok' = Erfolg, 'busy' = lädt gerade
+  function setStatus(msg, kind) {
+    $('status').textContent = msg;
+    const k = kind === true ? 'err' : kind || '';
+    $('banner').className = 'banner' + (k ? ' ' + k : '') + (msg ? '' : ' hidden');
+    $('spin').classList.toggle('hidden', k !== 'busy');
+  }
 
   function rowsData() {
     return holdings.map(h => {
@@ -349,6 +445,12 @@
 
   function render(full = true) {
     const has = holdings.length > 0;
+    const setup = !keyOk || !has;
+    $('steps').classList.toggle('hidden', !setup);
+    $('step1').classList.toggle('done', keyOk);
+    $('step2').classList.toggle('done', has);
+    $('step2').classList.remove('hidden');
+    $('changeKey').classList.toggle('hidden', setup);
     $('drop').classList.toggle('hidden', has);
     $('tiles').classList.toggle('hidden', !has);
     $('layout').classList.toggle('hidden', !has);
@@ -391,7 +493,7 @@
             <span class="name" style="display:inline-block;vertical-align:middle;margin-left:6px">${esc(r.name)}</span></td>
         <td>${fmt(r.qty, '', r.qty % 1 ? 3 : 0)}</td>
         <td>${fmt(r.buy, r.cur)}</td>
-        <td><b>${fmt(r.price, r.cur)}</b></td>
+        <td>${!isFinite(r.price) && busy ? '<span class="loading">lädt …</span>' : `<b>${fmt(r.price, r.cur)}</b>`}</td>
         <td class="${cls(r.dp)}">${pct(r.dp)}</td>
         <td>${fmt(r.value, r.cur)}</td>
         <td class="${cls(r.pl)}">${isFinite(r.pl) ? (r.pl > 0 ? '+' : '') + fmt(r.pl, r.cur) : '–'}</td>
@@ -419,7 +521,7 @@
           ${n.summary ? `<p>${esc(n.summary)}</p>` : ''}
         </div>
       </article>`).join('')
-      : `<div class="empty">${key() ? 'Keine Nachrichten der letzten 7 Tage gefunden.' : 'API-Key eintragen, um Nachrichten zu laden.'}</div>`;
+      : `<div class="empty">${busy ? 'Nachrichten werden geladen …' : key() ? 'Keine Nachrichten der letzten 7 Tage gefunden.' : 'API-Key eintragen, um Nachrichten zu laden.'}</div>`;
   }
 
   $('rows').onclick = e => {
@@ -436,6 +538,7 @@
 
   render();
   if (holdings.length && key()) refresh();
+  else if (!key()) setStatus('Willkommen! Trage zuerst unten deinen Finnhub API-Key ein.', '');
 })();
 </script>
 </body>
