@@ -78,7 +78,7 @@ sw.js               Offline-Cache (Service Worker)
 Eine eigene Seite unter `aktien/index.html`: Depot per CSV laden und aktuelle Kurse, Tagesänderung, Gewinn/Verlust und Nachrichten der letzten 7 Tage ansehen.
 
 1. Kostenlosen API-Key auf [finnhub.io](https://finnhub.io) holen und oben eintragen.
-2. CSV mit den Spalten `Symbol;Name;Anzahl;Kaufkurs` laden (Vorlage: `aktien/beispiel.csv`).
+2. CSV mit den Spalten `Symbol;Name;Anzahl;Kaufkurs` laden (Vorlage: `aktien/beispiel.csv`). Statt `Symbol` geht auch `ISIN` oder `WKN`, z. B. aus einem Depot-Export deiner Bank.
 3. Auf eine Aktie klicken, um nur ihre Nachrichten zu sehen. Kurse aktualisieren sich jede Minute.
 
 Key und Depot bleiben lokal im Browser.

@@ -80,7 +80,7 @@
   <input id="apiKey" type="password" placeholder="Finnhub API-Key" autocomplete="off" title="Kostenloser Key auf finnhub.io">
   <button id="saveKey">Key speichern</button>
   <label class="btn" for="csvInput">CSV laden</label>
-  <input id="csvInput" type="file" accept=".csv,text/csv" class="hidden">
+  <input id="csvInput" type="file" class="hidden">
   <button id="refresh" class="primary">Aktualisieren</button>
   <span id="status" class="status"></span>
 </header>
@@ -89,7 +89,9 @@
   <div id="drop" class="drop">
     <strong>CSV-Datei hierher ziehen</strong> oder oben auf „CSV laden“ klicken.<br><br>
     Erwartete Spalten (Reihenfolge egal, <code>;</code> oder <code>,</code> als Trenner):<br>
-    <code>Symbol</code> (Pflicht) · <code>Name</code> · <code>Anzahl</code> · <code>Kaufkurs</code><br><br>
+    <code>Symbol</code> oder <code>ISIN</code>/<code>WKN</code> (Pflicht) · <code>Name</code> · <code>Anzahl</code> · <code>Kaufkurs</code><br><br>
+    <div id="dropErr" class="err" style="margin-bottom:12px"></div>
+    <label class="btn primary" for="csvInput" style="background:var(--accent);color:#fff;border-color:var(--accent)">CSV-Datei auswählen</label>
     <a class="btn" href="beispiel.csv" download>Beispiel-CSV herunterladen</a>
     <details>
       <summary>Hinweise</summary>
@@ -170,53 +172,97 @@
     out.push(cur);
     return out.map(x => x.trim());
   }
-  const COLS = {
-    symbol: ['symbol', 'ticker', 'kürzel', 'kuerzel', 'code'],
-    name:   ['name', 'bezeichnung', 'unternehmen', 'firma', 'wertpapier'],
-    qty:    ['anzahl', 'stück', 'stueck', 'stk', 'menge', 'shares', 'quantity', 'qty', 'bestand'],
-    buy:    ['kaufkurs', 'einstand', 'einstandskurs', 'kaufpreis', 'preis', 'price', 'buy', 'avg', 'durchschnitt']
-  };
+  const COLS = [                                   // Reihenfolge = Priorität bei der Zuordnung
+    ['isin',   ['isin']],
+    ['wkn',    ['wkn']],
+    ['symbol', ['symbol', 'ticker', 'kürzel', 'kuerzel', 'börsenkürzel']],
+    ['qty',    ['anzahl', 'stück', 'stueck', 'stk', 'menge', 'nominale', 'shares', 'quantity', 'qty', 'bestand', 'units']],
+    ['buy',    ['kaufkurs', 'einstandskurs', 'einstand', 'kaufpreis', 'kaufwert je', 'ø', 'avg', 'average', 'durchschnitt', 'buy', 'preis', 'price']],
+    ['name',   ['name', 'bezeichnung', 'wertpapier', 'unternehmen', 'firma', 'titel', 'instrument']]
+  ];
+  const ISIN_RE = /^[A-Z]{2}[A-Z0-9]{9}\d$/;
+  const WKN_RE = /^[A-Z0-9]{6}$/;
+  const TICKER_RE = /^[A-Z0-9][A-Z0-9.\-]{0,11}$/;
+  const label = h => h.symbol || h.isin || h.wkn;
+
+  function detectSep(line) {
+    return [';', '\t', ',', '|'].sort((a, b) => splitLine(line, b).length - splitLine(line, a).length)[0];
+  }
+  function mapHeader(cells) {
+    const head = cells.map(x => x.toLowerCase().replace(/\s+/g, ' ').trim());
+    const idx = {}, used = new Set();
+    for (const [k, names] of COLS) {
+      idx[k] = head.findIndex((x, i) => !used.has(i) && x && names.some(n => x.includes(n)));
+      if (idx[k] >= 0) used.add(idx[k]);
+    }
+    return idx;
+  }
   function parseCSV(text) {
-    const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
+    const lines = text.replace(/^﻿/, '').split(/\r\n|\n|\r/).filter(l => l.replace(/[;,\t|"\s]/g, ''));
     if (!lines.length) throw new Error('Die Datei ist leer.');
-    const h = lines[0];
-    const sep = [';', '\t', ','].sort((a, b) => h.split(b).length - h.split(a).length)[0];
-    const head = splitLine(h, sep).map(x => x.toLowerCase());
-    const idx = {};
-    for (const [k, names] of Object.entries(COLS)) idx[k] = head.findIndex(x => names.some(n => x.includes(n)));
-    if (idx.symbol < 0) throw new Error('Keine Spalte „Symbol“ (oder „Ticker“) gefunden.');
+    // Kopfzeile suchen (Broker-Exporte haben oft ein paar Infozeilen davor)
+    let hi = -1, sep, idx;
+    for (let i = 0; i < Math.min(lines.length, 40); i++) {
+      const sp = detectSep(lines[i]), m = mapHeader(splitLine(lines[i], sp));
+      if (m.symbol >= 0 || m.isin >= 0 || m.wkn >= 0) { hi = i; sep = sp; idx = m; break; }
+    }
+    if (hi < 0) {
+      // Keine Kopfzeile: erste Spalte = Kürzel/ISIN, dann Anzahl, dann Kaufkurs
+      sep = detectSep(lines[0]);
+      const c0 = splitLine(lines[0], sep), first = (c0[0] || '').replace(/"/g, '');
+      const looksLikeId = ISIN_RE.test(first) || (TICKER_RE.test(first) && first === first.toUpperCase());
+      if (!looksLikeId || !isFinite(parseNum(c0[1]))) {
+        throw new Error('Keine passende Spalte gefunden. Die CSV braucht eine Spalte „Symbol“, „Ticker“, „ISIN“ oder „WKN“. Gefundene Kopfzeile: ' + lines[0].slice(0, 120));
+      }
+      idx = { symbol: 0, qty: 1, buy: 2, name: -1, isin: -1, wkn: -1 };
+      hi = -1;
+    }
+    const get = (c, k) => idx[k] >= 0 ? (c[idx[k]] || '').trim() : '';
     const map = new Map();
-    for (const line of lines.slice(1)) {
+    for (const line of lines.slice(hi + 1)) {
       const c = splitLine(line, sep);
-      const symbol = (c[idx.symbol] || '').toUpperCase().trim();
-      if (!symbol) continue;
-      const qty = idx.qty >= 0 ? parseNum(c[idx.qty]) : NaN;
-      const buy = idx.buy >= 0 ? parseNum(c[idx.buy]) : NaN;
-      const prev = map.get(symbol);
-      if (prev && isFinite(qty) && isFinite(prev.qty)) {          // gleiche Aktie mehrfach -> zusammenfassen
+      let symbol = get(c, 'symbol').toUpperCase(), isin = get(c, 'isin').toUpperCase(), wkn = get(c, 'wkn').toUpperCase();
+      if (ISIN_RE.test(symbol)) { isin = isin || symbol; symbol = ''; }          // ISIN in der Symbol-Spalte
+      if (symbol && !TICKER_RE.test(symbol)) symbol = '';
+      if (!ISIN_RE.test(isin)) isin = '';
+      if (!WKN_RE.test(wkn)) wkn = '';
+      if (!symbol && !isin && !wkn) continue;                                   // Summen-/Leerzeilen überspringen
+      const qty = parseNum(get(c, 'qty')), buy = parseNum(get(c, 'buy'));
+      const h = { symbol, isin, wkn, name: get(c, 'name'), qty, buy };
+      const k = label(h), prev = map.get(k);
+      if (prev && isFinite(qty) && isFinite(prev.qty)) {                        // gleiche Aktie mehrfach -> zusammenfassen
         const tq = prev.qty + qty;
         if (isFinite(buy) && isFinite(prev.buy)) prev.buy = (prev.buy * prev.qty + buy * qty) / tq;
         prev.qty = tq;
-      } else {
-        map.set(symbol, { symbol, name: idx.name >= 0 ? c[idx.name] || '' : '', qty, buy });
-      }
+      } else map.set(k, h);
     }
     const list = [...map.values()];
-    if (!list.length) throw new Error('Keine Aktien in der Datei gefunden.');
+    if (!list.length) throw new Error('Keine Aktien in der Datei gefunden (Kopfzeile erkannt, aber keine gültigen Zeilen darunter).');
     return list;
   }
+  function decode(buf) {
+    const b = new Uint8Array(buf);
+    if (b[0] === 0x50 && b[1] === 0x4B) throw new Error('Das ist eine Excel-Datei (.xlsx). Bitte in Excel „Speichern unter → CSV (Trennzeichen-getrennt)“ wählen.');
+    if (b[0] === 0xFF && b[1] === 0xFE) return new TextDecoder('utf-16le').decode(buf);
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+    catch { return new TextDecoder('windows-1252').decode(buf); }               // typisch für Excel unter Windows
+  }
+  function showError(msg) { setStatus(msg, true); $('dropErr').textContent = msg; }
   function loadFile(file) {
+    $('dropErr').textContent = '';
+    setStatus('Lese ' + file.name + ' …');
     const r = new FileReader();
+    r.onerror = () => showError('Die Datei konnte nicht gelesen werden.');
     r.onload = () => {
       try {
-        holdings = parseCSV(r.result);
+        holdings = parseCSV(decode(r.result));
         store.set('aktien.holdings', holdings);
         data = {}; selected = null;
         setStatus(`${holdings.length} Positionen geladen.`);
         render(); refresh();
-      } catch (e) { setStatus(e.message, true); }
+      } catch (e) { showError(e.message); }
     };
-    r.readAsText(file, 'utf-8');
+    r.readAsArrayBuffer(file);
   }
   $('csvInput').onchange = e => { if (e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ''; };
   const drop = $('drop');
@@ -246,8 +292,20 @@
     busy = true; $('refresh').disabled = true;
     const to = new Date(), from = new Date(Date.now() - 7 * 864e5);
     let errors = 0, lastErr = '';
+    // ISIN/WKN ohne Kürzel über die Finnhub-Suche in ein Börsenkürzel umwandeln
+    for (const h of holdings.filter(h => !h.symbol && !h.unresolved)) {
+      setStatus(`Suche Kürzel für ${h.isin || h.wkn} …`);
+      try {
+        const r = await api('/search', { q: h.isin || h.wkn });
+        const list = (r && r.result || []).filter(x => x.symbol);
+        const pick = list.find(x => !x.symbol.includes('.') && /stock|adr|common/i.test(x.type || '')) || list.find(x => !x.symbol.includes('.')) || list[0];
+        if (pick) { h.symbol = pick.symbol; if (!h.name) h.name = pick.description || ''; } else h.unresolved = true;
+      } catch (e) { errors++; lastErr = e.message; break; }
+    }
+    store.set('aktien.holdings', holdings);
     for (let i = 0; i < holdings.length; i++) {
       const s = holdings[i].symbol;
+      if (!s) { errors++; lastErr = `Kein Börsenkürzel für ${label(holdings[i])} gefunden – bitte Symbol in der CSV ergänzen.`; continue; }
       setStatus(`Lade ${s} (${i + 1}/${holdings.length}) …`);
       const d = data[s] || (data[s] = {});
       try {
@@ -283,7 +341,7 @@
       const d = data[h.symbol] || {}, q = d.quote, p = d.profile || {};
       const price = q ? q.c : NaN, qty = isFinite(h.qty) ? h.qty : NaN;
       const value = price * qty, cost = h.buy * qty;
-      return { ...h, name: h.name || p.name || '', logo: p.logo, cur: p.currency || '',
+      return { ...h, symbol: label(h), name: h.name || p.name || '', logo: p.logo, cur: p.currency || '',
         price, dp: q ? q.dp : NaN, dayAbs: q ? q.d * qty : NaN,
         value, cost, pl: value - cost, plp: (price / h.buy - 1) * 100 };
     });
