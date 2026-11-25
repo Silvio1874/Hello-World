@@ -7,230 +7,161 @@
 <style>
   :root {
     --bg: #f4f6f9; --panel: #ffffff; --text: #1b2330; --muted: #667085;
-    --line: #e3e7ee; --accent: #2f6fed; --up: #12924f; --down: #d0343a;
-    --chip: #eef2f8;
+    --line: #e3e7ee; --accent: #2f6fed; --up: #12924f; --down: #d0343a; --chip: #eef2f8;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #10141b; --panel: #181e28; --text: #e6eaf0; --muted: #98a2b3;
-      --line: #273041; --accent: #5b8cff; --up: #3ccf7f; --down: #ff6369;
-      --chip: #212a38;
+      --line: #273041; --accent: #5b8cff; --up: #3ccf7f; --down: #ff6369; --chip: #212a38;
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-         background: var(--bg); color: var(--text); }
-  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
-           padding: 14px 20px; background: var(--panel); border-bottom: 1px solid var(--line);
-           position: sticky; top: 0; z-index: 5; }
+  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 20px; background: var(--panel);
+           border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
   header h1 { font-size: 18px; margin: 0 auto 0 0; }
+  header .stand { color: var(--muted); font-size: 13px; }
   button, .btn { font: inherit; border: 1px solid var(--line); background: var(--chip); color: var(--text);
-                 padding: 7px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  button:disabled { opacity: .5; cursor: default; }
-  input[type=password], input[type=text] { font: inherit; padding: 7px 10px; border-radius: 8px;
-         border: 1px solid var(--line); background: var(--bg); color: var(--text); width: 230px; max-width: 100%; }
-  main { padding: 18px 20px 40px; max-width: 1400px; margin: 0 auto; }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+                 padding: 7px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-block; }
+  .primary { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
+  main { padding: 18px 20px 40px; max-width: 1300px; margin: 0 auto; }
+  .banner { padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; border: 1px solid var(--line); background: var(--panel); }
+  .banner.ok { border-color: var(--up); background: color-mix(in srgb, var(--up) 10%, var(--panel)); }
+  .banner.err { border-color: var(--down); background: color-mix(in srgb, var(--down) 10%, var(--panel)); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
   .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
   .tile .label { color: var(--muted); font-size: 13px; }
   .tile .value { font-size: 22px; font-weight: 650; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .tile .sub { font-size: 13px; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-  @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-  .panel h2 { font-size: 15px; margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line);
-              display: flex; align-items: center; gap: 8px; }
-  .panel h2 .right { margin-left: auto; font-weight: 400; color: var(--muted); font-size: 13px; }
+  .panel h2 { font-size: 15px; margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .tabs { display: flex; gap: 6px; margin-left: auto; }
+  .tabs button { padding: 3px 10px; font-size: 13px; }
+  .tabs button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
   .tablewrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   th, td { padding: 9px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
   th { font-size: 12px; color: var(--muted); font-weight: 600; cursor: pointer; user-select: none; }
-  th:first-child, td:first-child { text-align: left; }
-  tbody tr { cursor: pointer; }
+  th:first-child, td:first-child { text-align: left; white-space: normal; min-width: 180px; }
   tbody tr:hover { background: var(--chip); }
-  tbody tr.active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
   .sym { font-weight: 650; }
-  .name { color: var(--muted); font-size: 12px; display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
-  .logo { width: 22px; height: 22px; border-radius: 5px; vertical-align: middle; margin-right: 8px; background: #fff; object-fit: contain; }
+  .small { color: var(--muted); font-size: 12px; display: block; }
+  .kind { font-size: 11px; background: var(--chip); border-radius: 4px; padding: 0 5px; margin-left: 6px; color: var(--muted); }
+  .bar { height: 4px; background: var(--chip); border-radius: 2px; margin-top: 3px; }
+  .bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
   .up { color: var(--up); } .down { color: var(--down); }
-  .news { max-height: 75vh; overflow-y: auto; }
-  .news article { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; }
-  .news article img { width: 84px; height: 60px; object-fit: cover; border-radius: 6px; flex: none; background: var(--chip); }
-  .news a { color: var(--text); text-decoration: none; font-weight: 600; }
-  .news a:hover { color: var(--accent); }
-  .news .meta { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
-  .news .meta .tag { background: var(--chip); padding: 1px 6px; border-radius: 5px; margin-right: 6px; font-weight: 600; color: var(--text); }
-  .news p { margin: 4px 0 0; font-size: 13px; color: var(--muted); display: -webkit-box;
-            -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .empty { padding: 28px 18px; color: var(--muted); text-align: center; }
-  .drop { border: 2px dashed var(--line); border-radius: 12px; padding: 36px 20px; text-align: center;
-          background: var(--panel); margin-bottom: 16px; }
+  .drop { border: 2px dashed var(--line); border-radius: 12px; padding: 32px 20px; text-align: center; background: var(--panel); margin-bottom: 16px; }
   .drop.over { border-color: var(--accent); }
-  .drop code { background: var(--chip); padding: 2px 6px; border-radius: 5px; }
-  .status { font-size: 13px; color: var(--muted); }
-  .err { color: var(--down); }
+  .drop h2 { margin: 0 0 8px; font-size: 20px; }
+  .drop p { color: var(--muted); max-width: 620px; margin: 8px auto; }
+  .drop .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  code { background: var(--chip); padding: 1px 5px; border-radius: 5px; }
+  details { margin: 16px auto 0; color: var(--muted); font-size: 13px; text-align: left; max-width: 640px; }
   .hidden { display: none !important; }
-  .banner { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px;
-            background: var(--panel); border: 1px solid var(--line); font-weight: 500; }
-  .banner.ok { border-color: var(--up); background: color-mix(in srgb, var(--up) 10%, var(--panel)); }
-  .banner.err { border-color: var(--down); background: color-mix(in srgb, var(--down) 10%, var(--panel)); color: var(--text); }
-  .banner.busy { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
-  .spin { width: 16px; height: 16px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%;
-          animation: spin .8s linear infinite; flex: none; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .bar { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent); z-index: 10; transition: width .3s; }
-  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
-  .step { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
-  .step h3 { margin: 0 0 6px; font-size: 16px; }
-  .step p { margin: 0 0 10px; color: var(--muted); font-size: 14px; }
-  .step .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .step input[type=password], .step input[type=text] { width: 100%; }
-  .step.done { border-color: var(--up); }
-  .step.done h3::after { content: " ✓"; color: var(--up); }
-  .loading { color: var(--muted); font-style: italic; }
-  .src { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
-  .src.live { color: var(--up); }
-  .kind { font-size: 11px; background: var(--chip); border-radius: 4px; padding: 0 5px; margin-left: 6px; color: var(--muted); vertical-align: middle; }
-  .edit { padding: 2px 7px; font-size: 12px; margin-left: 6px; vertical-align: middle; }
-  .warn { background: color-mix(in srgb, var(--down) 15%, var(--panel)); color: var(--down); border-color: var(--down); }
-  #fix { margin-bottom: 16px; }
-  #fix .body { padding: 14px 16px; }
-  #fix .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
-  #fix input[type=text] { flex: 1 1 220px; width: auto; }
-  #fixList { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 8px; }
-  #fixList li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
-  #fixList li:last-child { border-bottom: 0; }
-  #fixList li .d { flex: 1; min-width: 0; }
-  #fixList li small { color: var(--muted); display: block; }
-  #fixList li.empty { color: var(--muted); justify-content: center; }
-  details { margin-top: 12px; color: var(--muted); font-size: 13px; text-align: left; max-width: 640px; margin-inline: auto; }
+  @media (max-width: 600px) { header { padding: 12px 16px; } main { padding: 14px 16px 32px; } }
 </style>
 </head>
 <body>
 <header>
   <h1>📈 Mein Aktien-Dashboard</h1>
-  <button id="changeKey" class="hidden">🔑 API-Key ändern</button>
-  <label class="btn" for="csvInput">CSV laden</label>
+  <span id="stand" class="stand"></span>
+  <label class="btn primary" for="csvInput">Neue CSV laden</label>
   <input id="csvInput" type="file" accept=".csv,.txt,text/csv" class="hidden">
-  <button id="refresh" class="primary">Aktualisieren</button>
 </header>
-<div id="bar" class="bar" style="width:0"></div>
 
 <main>
-  <div id="banner" class="banner hidden"><span id="spin" class="spin hidden"></span><span id="status"></span></div>
-
-  <div id="steps" class="steps">
-    <div class="step" id="step1">
-      <h3>Schritt 1: API-Key eintragen</h3>
-      <p>Den kostenlosen Schlüssel findest du nach der Anmeldung auf
-        <a href="https://finnhub.io/dashboard" target="_blank" rel="noopener">finnhub.io/dashboard</a> unter „API Key“.
-        Einfach kopieren und hier einfügen.</p>
-      <div class="row">
-        <input id="apiKey" type="password" placeholder="z. B. d1abc23def45…" autocomplete="off" spellcheck="false">
-        <button id="saveKey" class="primary">Key prüfen und speichern</button>
-        <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="showKey"> Key anzeigen</label>
-      </div>
-    </div>
-    <div class="step" id="step2">
-      <h3>Schritt 2: Depot laden</h3>
-      <p>Lade deine CSV-Datei mit deinen Aktien. Zum Ausprobieren kannst du auch das Beispieldepot nehmen.</p>
-      <div class="row">
-        <label class="btn primary" for="csvInput" style="background:var(--accent);color:#fff;border-color:var(--accent)">CSV-Datei auswählen</label>
-        <button id="demo">Beispieldepot ausprobieren</button>
-      </div>
-    </div>
-  </div>
+  <div id="banner" class="banner hidden"></div>
 
   <div id="drop" class="drop">
-    <strong>CSV-Datei hierher ziehen</strong> oder oben auf „CSV laden“ klicken.<br><br>
-    Erwartete Spalten (Reihenfolge egal, <code>;</code> oder <code>,</code> als Trenner):<br>
-    <code>Symbol</code> oder <code>ISIN</code>/<code>WKN</code> (Pflicht) · <code>Name</code> · <code>Anzahl</code> · <code>Kaufkurs</code><br><br>
-    <div id="dropErr" class="err" style="margin-bottom:12px"></div>
-    <button id="dlExample">Beispiel-CSV herunterladen</button>
+    <h2>Lade deine Depot-CSV</h2>
+    <p>Exportiere bei deiner Bank die Depotübersicht als CSV-Datei und lade sie hier.
+       Du kannst die Datei auch einfach in dieses Feld ziehen.</p>
+    <div class="row">
+      <label class="btn primary" for="csvInput">CSV-Datei auswählen</label>
+      <button id="demo">Beispieldepot ansehen</button>
+      <button id="dlExample">Beispiel-CSV herunterladen</button>
+    </div>
     <details>
-      <summary>Hinweise</summary>
+      <summary>Welche Dateien gehen?</summary>
       <ul>
-        <li>Kurse und Nachrichten kommen von <a href="https://finnhub.io" target="_blank" rel="noopener">finnhub.io</a>. Dort gibt es einen kostenlosen API-Key (60 Abfragen/Minute).</li>
-        <li>Symbol = Börsenkürzel, z. B. <code>AAPL</code>, <code>MSFT</code>. Der kostenlose Zugang deckt vor allem US-Börsen ab; europäische Aktien am besten über ihr US-Kürzel/ADR (z. B. <code>SAP</code>).</li>
-        <li>Zahlen dürfen deutsch geschrieben sein (<code>1.234,56</code>). Andere Spaltennamen wie <code>Ticker</code>, <code>Stück</code>, <code>Menge</code>, <code>Einstandskurs</code> werden auch erkannt.</li>
-        <li>Key und Depot werden nur lokal in deinem Browser gespeichert.</li>
+        <li>Depot-Exporte deutscher Banken (z. B. mit den Spalten <code>Name</code>, <code>WKN</code>, <code>Stück</code>, <code>Einstandskurs</code>, <code>Kurs</code>). Infozeilen über der Tabelle sind kein Problem.</li>
+        <li>Eigene Listen gehen auch. Wichtig sind die Spalten <code>WKN</code>, <code>ISIN</code> oder <code>Symbol</code>, dazu <code>Anzahl</code>, <code>Kaufkurs</code> und <code>Kurs</code>.</li>
+        <li>Zahlen dürfen deutsch geschrieben sein (<code>1.234,56</code>).</li>
+        <li>Deine Datei bleibt auf deinem Gerät. Nichts wird ins Internet geschickt.</li>
       </ul>
     </details>
   </div>
 
-  <section id="fix" class="panel hidden">
-    <h2>Börsenkürzel korrigieren: <span id="fixWhat"></span>
-      <button id="fixClose" style="margin-left:auto;padding:3px 9px;font-size:13px">Schließen</button></h2>
-    <div class="body">
-      <p style="margin:0 0 10px;color:var(--muted);font-size:14px">Gib den Firmennamen ein (z. B. <i>BASF</i> oder <i>Allianz</i>) und klicke auf „Suchen“. Dann den passenden Treffer übernehmen.
-        Gut zu wissen: Der kostenlose Finnhub-Zugang hat nur Live-Kurse von US-Börsen. Für deutsche Aktien und ETFs gilt deshalb der Kurs aus deiner CSV. Die Seite prüft jeden Live-Kurs gegen den CSV-Kurs und nimmt ihn nur, wenn er passt.</p>
-      <div class="row">
-        <input id="fixQuery" type="text" placeholder="Firmenname, ISIN oder Kürzel">
-        <button id="fixSearch" class="primary">Suchen</button>
-      </div>
-      <ul id="fixList"></ul>
-      <div class="row" style="margin-top:12px">
-        <input id="fixManual" type="text" placeholder="oder Kürzel direkt eintippen, z. B. AAPL" style="text-transform:uppercase">
-        <button id="fixSave">Dieses Kürzel nehmen</button>
-        <button id="fixNone" class="hidden">Kein Live-Kurs, Kurs aus der CSV nehmen</button>
-      </div>
-    </div>
-  </section>
-
   <section id="tiles" class="tiles hidden"></section>
 
-  <div id="layout" class="layout hidden">
-    <section class="panel">
-      <h2>Depot <span class="right" id="updated"></span></h2>
-      <div class="tablewrap">
-        <table>
-          <thead><tr>
-            <th data-k="symbol">Aktie</th>
-            <th data-k="qty">Stück</th>
-            <th data-k="buy">Kaufkurs</th>
-            <th data-k="price">Aktuell</th>
-            <th data-k="dp">Heute</th>
-            <th data-k="value">Wert</th>
-            <th data-k="pl">Gewinn/Verlust</th>
-            <th data-k="plp">G/V %</th>
-          </tr></thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2><span id="newsTitle">Nachrichten – alle Aktien</span>
-        <button id="allNews" class="hidden" style="margin-left:auto;padding:3px 9px;font-size:13px">Alle zeigen</button></h2>
-      <div id="news" class="news"><div class="empty">Noch keine Nachrichten geladen.</div></div>
-    </section>
-  </div>
+  <section id="table" class="panel hidden">
+    <h2>Depot <span id="count" class="small" style="display:inline"></span>
+      <span class="tabs" id="tabs">
+        <button data-f="all" class="on">Alle</button><button data-f="aktie">Aktien</button><button data-f="etf">ETFs &amp; Fonds</button>
+      </span>
+    </h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th data-k="name">Wertpapier</th>
+          <th data-k="qty">Stück</th>
+          <th data-k="buy">Kaufkurs</th>
+          <th data-k="price">Kurs</th>
+          <th data-k="dp">Heute</th>
+          <th data-k="value">Wert</th>
+          <th data-k="share">Anteil</th>
+          <th data-k="pl">Gewinn/Verlust</th>
+          <th data-k="plp">in %</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
 </main>
 
 <script>
 (() => {
-  const API = 'https://finnhub.io/api/v1';
   const $ = id => document.getElementById(id);
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
   };
+  // Alte Einträge der Finnhub-Version aufräumen
+  try { localStorage.removeItem('aktien.key'); } catch {}
 
-  let holdings = store.get('aktien.holdings', []);   // [{symbol,name,qty,buy}]
-  let data = {};      // symbol -> {quote, profile, news}
-  let selected = null;
-  let sort = store.get('aktien.sort', { k: 'value', dir: -1 });
-  let busy = false;
+  let depot = store.get('aktien.depot', null);          // { items: [...], stand: '...', file: '...' }
+  let sort = store.get('aktien.sort2', { k: 'value', dir: -1 });
+  let filter = 'all';
 
-  const EXAMPLE_CSV = 'Symbol;Name;Anzahl;Kaufkurs\nAAPL;Apple;10;150,00\nMSFT;Microsoft;5;310,50\nNVDA;NVIDIA;8;95,20\nAMZN;Amazon;6;128,00\nSAP;SAP (ADR);4;140,00\n';
-  $('apiKey').value = store.get('aktien.key', '');
-  let keyOk = !!$('apiKey').value;
+  const EXAMPLE_CSV = 'Name;WKN;Gattung;Stück;Einstandskurs;Kurs;Datum/Uhrzeit;Entwicklung prozentual (Heute)\n' +
+    'Apple;865985;Aktie;10;150,00;205,40;24.11.2026 17:30:00;0,45\n' +
+    'Siemens;723610;Aktie;8;120,50;210,10;24.11.2026 17:30:00;-0,62\n' +
+    'Allianz;840400;Aktie;5;210,00;365,20;24.11.2026 17:30:00;0,18\n' +
+    'MSCI World ETF;A0RPWH;ETF;40;65,30;102,85;24.11.2026 17:30:00;0,31\n' +
+    'Emerging Markets ETF;A12GVR;ETF;30;45,10;52,40;24.11.2026 17:30:00;-0,25\n';
 
-  // ---------- CSV ----------
+  // Lesbare Namen für bekannte WKNs (Bank-Exporte kürzen Namen oft stark ab)
+  const NAMES = {
+    '865985': 'Apple', 'A1CX3T': 'Tesla', '552484': 'Netflix', '870747': 'Microsoft', '918422': 'NVIDIA', '906866': 'Amazon',
+    'A14Y6F': 'Alphabet A', 'A14Y6H': 'Alphabet C', 'A1JWVX': 'Meta Platforms', '863186': 'AMD', 'A2QA4J': 'Palantir',
+    '888024': 'Intuitive Surgical', 'A40PW4': 'BlackRock', 'A3D7VW': 'Linde', 'A2QMYY': 'Hims & Hers', 'A3CVQC': 'Robinhood',
+    'A419CG': 'Rocket Lab', '722713': 'Strategy', 'A3CL8W': 'AST SpaceMobile', 'A41986': 'Galaxy Digital', 'A2PSR2': 'BioNTech',
+    'A1J4U4': 'ASML', '916018': 'British American Tobacco', 'A1138D': 'Tencent', 'A41NM1': 'Unilever', '850727': 'TotalEnergies',
+    '850663': 'Coca-Cola', '851995': 'PepsiCo', 'A0NC7B': 'Visa', 'A0YJQ2': 'Berkshire Hathaway B', '850628': 'JPMorgan Chase',
+    '855681': 'Intel', 'A2JG9Z': 'Broadcom', 'A2QP7J': 'Coinbase', 'A2PHHG': 'Uber', 'A14TJP': 'Shopify', '855686': 'Walt Disney',
+    '856958': "McDonald's", '853260': 'Johnson & Johnson', '852009': 'Pfizer', 'A3EU6F': 'Novo Nordisk', 'A117ME': 'Alibaba',
+    '716460': 'SAP', '723610': 'Siemens', 'ENER6Y': 'Siemens Energy', '840400': 'Allianz', '843002': 'Münchener Rück',
+    '514000': 'Deutsche Bank', '555750': 'Deutsche Telekom', 'ENAG99': 'E.ON', 'BASF11': 'BASF', 'BAY001': 'Bayer', '519000': 'BMW',
+    '710000': 'Mercedes-Benz', '766403': 'Volkswagen Vz.', '623100': 'Infineon', 'A1EWWW': 'adidas', 'A1ML7J': 'Vonovia',
+    '547030': 'CTS Eventim', 'A2LQ88': 'Auto1', 'A2YN90': 'TeamViewer', '716563': 'Sartorius Vz.', '938914': 'Airbus',
+    '853292': 'LVMH', '860180': 'Schneider Electric', 'A0M46B': 'Iberdrola', 'A41NML': 'Magnum Ice Cream', '891624': 'SoftBank',
+    'A42SXH': 'Anthropic'
+  };
+
+  // ---------- CSV lesen ----------
   function parseNum(s) {
     if (s == null) return NaN;
-    s = String(s).trim().replace(/[€$\s]/g, '');
+    s = String(s).trim().replace(/[€$%\s]/g, '');
     if (!s) return NaN;
     if (s.includes(',') && s.includes('.')) {
       s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
@@ -248,48 +179,26 @@
     out.push(cur);
     return out.map(x => x.trim());
   }
-  const COLS = [                                   // Reihenfolge = Priorität bei der Zuordnung
+  // Spalten, die per "enthält" erkannt werden (Reihenfolge = Priorität)
+  const COLS = [
     ['isin',   ['isin']],
     ['wkn',    ['wkn']],
-    ['symbol', ['symbol', 'ticker', 'kürzel', 'kuerzel', 'börsenkürzel']],
-    ['qty',    ['anzahl', 'stück', 'stueck', 'stk', 'menge', 'nominale', 'shares', 'quantity', 'qty', 'bestand', 'units']],
-    ['buy',    ['kaufkurs', 'einstandskurs', 'einstand', 'kaufpreis', 'kaufwert je', 'ø', 'avg', 'average', 'durchschnitt', 'buy', 'preis', 'price']],
-    ['name',   ['name', 'bezeichnung', 'wertpapier', 'unternehmen', 'firma', 'titel', 'instrument']]
+    ['symbol', ['symbol', 'ticker', 'kürzel', 'kuerzel']],
+    ['qty',    ['anzahl', 'stück', 'stueck', 'stk', 'menge', 'nominal', 'shares', 'quantity', 'bestand']],
+    ['buy',    ['einstandskurs', 'kaufkurs', 'einstand', 'kaufpreis', 'durchschnitt', 'avg']],
+    ['name',   ['name', 'bezeichnung', 'wertpapier', 'unternehmen', 'titel']]
   ];
-  const EXTRA = [
-    ['price',  ['kurs', 'aktueller kurs', 'kurs in eur', 'letzter kurs', 'kurs (eur)']],
+  // Spalten, die exakt so heißen müssen
+  const EXACT = [
+    ['price',  ['kurs', 'aktueller kurs', 'kurs in eur', 'letzter kurs', 'kurs (eur)', 'akt. kurs', 'preis']],
     ['cur',    ['kurs währung/prozent', 'kurs währung', 'kurswährung', 'währung']],
-    ['time',   ['datum/uhrzeit', 'kursdatum', 'kurszeit']],
+    ['time',   ['datum/uhrzeit', 'kursdatum', 'kurszeit', 'datum']],
     ['dayAbs', ['entwicklung absolut (heute)']],
-    ['dayPct', ['entwicklung prozentual (heute)']],
-    ['kind',   ['gattung', 'wertpapierart', 'typ']]
+    ['dayPct', ['entwicklung prozentual (heute)', 'heute %', 'veränderung %']],
+    ['value',  ['gesamtwert', 'kurswert', 'marktwert', 'wert']],
+    ['kind',   ['gattung', 'wertpapierart', 'typ', 'art']]
   ];
-  // Bekannte WKNs: US-Kürzel für Live-Kurse bei Finnhub (nur wenn 1 Papier = 1 Aktie) und lesbare Namen.
-  // Ohne Kürzel = kein Live-Kurs im Gratis-Tarif, dann gilt der Kurs aus der CSV.
-  const KNOWN = {
-    '865985': ['AAPL', 'Apple'], 'A1CX3T': ['TSLA', 'Tesla'], '552484': ['NFLX', 'Netflix'], '870747': ['MSFT', 'Microsoft'],
-    '918422': ['NVDA', 'NVIDIA'], '906866': ['AMZN', 'Amazon'], 'A14Y6F': ['GOOGL', 'Alphabet A'], 'A14Y6H': ['GOOG', 'Alphabet C'],
-    'A1JWVX': ['META', 'Meta Platforms'], '863186': ['AMD', 'AMD'], 'A2QA4J': ['PLTR', 'Palantir'], '888024': ['ISRG', 'Intuitive Surgical'],
-    'A40PW4': ['BLK', 'BlackRock'], 'A3D7VW': ['LIN', 'Linde'], 'A2QMYY': ['HIMS', 'Hims & Hers'], 'A3CVQC': ['HOOD', 'Robinhood'],
-    'A419CG': ['RKLB', 'Rocket Lab'], '722713': ['MSTR', 'Strategy'], 'A3CL8W': ['ASTS', 'AST SpaceMobile'], 'A41986': ['GLXY', 'Galaxy Digital'],
-    'A2PSR2': ['BNTX', 'BioNTech'], 'A1J4U4': ['ASML', 'ASML'], '916018': ['BTI', 'British American Tobacco'], 'A1138D': ['TCEHY', 'Tencent'],
-    'A41NM1': ['UL', 'Unilever'], '850727': ['TTE', 'TotalEnergies'], '850663': ['KO', 'Coca-Cola'], '851995': ['PEP', 'PepsiCo'],
-    'A0NC7B': ['V', 'Visa'], 'A0YJQ2': ['BRK.B', 'Berkshire Hathaway B'], '850628': ['JPM', 'JPMorgan Chase'], '855681': ['INTC', 'Intel'],
-    'A2JG9Z': ['AVGO', 'Broadcom'], 'A2QP7J': ['COIN', 'Coinbase'], 'A2PHHG': ['UBER', 'Uber'], 'A14TJP': ['SHOP', 'Shopify'],
-    '855686': ['DIS', 'Walt Disney'], '856958': ['MCD', "McDonald's"], '853260': ['JNJ', 'Johnson & Johnson'], '852009': ['PFE', 'Pfizer'],
-    'A3EU6F': ['NVO', 'Novo Nordisk'], 'A117ME': ['BABA', 'Alibaba'],
-    '716460': ['', 'SAP'], '723610': ['', 'Siemens'], 'ENER6Y': ['', 'Siemens Energy'], '840400': ['', 'Allianz'],
-    '843002': ['', 'Münchener Rück'], '514000': ['', 'Deutsche Bank'], '555750': ['', 'Deutsche Telekom'], 'ENAG99': ['', 'E.ON'],
-    'BASF11': ['', 'BASF'], 'BAY001': ['', 'Bayer'], '519000': ['', 'BMW'], '710000': ['', 'Mercedes-Benz'], '766403': ['', 'Volkswagen Vz.'],
-    '623100': ['', 'Infineon'], 'A1EWWW': ['', 'adidas'], 'A1ML7J': ['', 'Vonovia'], '547030': ['', 'CTS Eventim'], 'A2LQ88': ['', 'Auto1'],
-    'A2YN90': ['', 'TeamViewer'], '716563': ['', 'Sartorius Vz.'], '938914': ['', 'Airbus'], '853292': ['', 'LVMH'],
-    '860180': ['', 'Schneider Electric'], 'A0M46B': ['', 'Iberdrola'], 'A41NML': ['', 'Magnum Ice Cream'], '891624': ['', 'SoftBank'],
-    'A42SXH': ['', 'Anthropic']
-  };
-  const ISIN_RE = /^[A-Z]{2}[A-Z0-9]{9}\d$/;
-  const WKN_RE = /^[A-Z0-9]{6}$/;
-  const TICKER_RE = /^[A-Z0-9][A-Z0-9.\-]{0,11}$/;
-  const label = h => h.symbol || h.isin || h.wkn;
+  const ISIN_RE = /^[A-Z]{2}[A-Z0-9]{9}\d$/, WKN_RE = /^[A-Z0-9]{6}$/, TICKER_RE = /^[A-Z0-9][A-Z0-9.\-]{0,11}$/;
 
   function detectSep(line) {
     return [';', '\t', ',', '|'].sort((a, b) => splitLine(line, b).length - splitLine(line, a).length)[0];
@@ -301,445 +210,206 @@
       idx[k] = head.findIndex((x, i) => !used.has(i) && x && names.some(n => x.includes(n)));
       if (idx[k] >= 0) used.add(idx[k]);
     }
-    // Zusatzspalten aus Bank-Exporten (exakter Spaltenname)
-    for (const [k, names] of EXTRA) idx[k] = head.findIndex((x, i) => !used.has(i) && names.includes(x));
+    for (const [k, names] of EXACT) {
+      idx[k] = head.findIndex((x, i) => !used.has(i) && names.includes(x));
+      if (idx[k] >= 0) used.add(idx[k]);
+    }
     return idx;
   }
   function parseCSV(text) {
-    const lines = text.replace(/^﻿/, '').split(/\r\n|\n|\r/).filter(l => l.replace(/[;,\t|"\s]/g, ''));
+    const lines = text.replace(/^\ufeff/, '').split(/\r\n|\n|\r/).filter(l => l.replace(/[;,\t|"\s]/g, ''));
     if (!lines.length) throw new Error('Die Datei ist leer.');
-    // Kopfzeile suchen (Broker-Exporte haben oft ein paar Infozeilen davor)
     let hi = -1, sep, idx;
     for (let i = 0; i < Math.min(lines.length, 40); i++) {
       const sp = detectSep(lines[i]), m = mapHeader(splitLine(lines[i], sp));
       if (m.symbol >= 0 || m.isin >= 0 || m.wkn >= 0) { hi = i; sep = sp; idx = m; break; }
     }
-    if (hi < 0) {
-      // Keine Kopfzeile: erste Spalte = Kürzel/ISIN, dann Anzahl, dann Kaufkurs
-      sep = detectSep(lines[0]);
-      const c0 = splitLine(lines[0], sep), first = (c0[0] || '').replace(/"/g, '');
-      const looksLikeId = ISIN_RE.test(first) || (TICKER_RE.test(first) && first === first.toUpperCase());
-      if (!looksLikeId || !isFinite(parseNum(c0[1]))) {
-        throw new Error('Keine passende Spalte gefunden. Die CSV braucht eine Spalte „Symbol“, „Ticker“, „ISIN“ oder „WKN“. Gefundene Kopfzeile: ' + lines[0].slice(0, 120));
-      }
-      idx = { symbol: 0, qty: 1, buy: 2, name: -1, isin: -1, wkn: -1 };
-      hi = -1;
+    if (hi < 0) throw new Error('In der Datei wurde keine Spalte „WKN“, „ISIN“ oder „Symbol“ gefunden. Ist das wirklich die Depotübersicht als CSV?');
+    // Exportdatum aus den Infozeilen über der Tabelle (falls vorhanden)
+    let stand = '';
+    for (let i = 0; i < hi; i++) {
+      const m = lines[i].match(/(\d{2}\.\d{2}\.\d{4}),?\s*(\d{2}:\d{2})/);
+      if (m) { stand = m[1] + ' ' + m[2]; break; }
     }
     const get = (c, k) => idx[k] >= 0 ? (c[idx[k]] || '').trim() : '';
     const map = new Map();
     for (const line of lines.slice(hi + 1)) {
       const c = splitLine(line, sep);
       let symbol = get(c, 'symbol').toUpperCase(), isin = get(c, 'isin').toUpperCase(), wkn = get(c, 'wkn').toUpperCase();
-      if (ISIN_RE.test(symbol)) { isin = isin || symbol; symbol = ''; }          // ISIN in der Symbol-Spalte
+      if (ISIN_RE.test(symbol)) { isin = isin || symbol; symbol = ''; }
       if (symbol && !TICKER_RE.test(symbol)) symbol = '';
       if (!ISIN_RE.test(isin)) isin = '';
       if (!WKN_RE.test(wkn)) wkn = '';
-      if (!symbol && !isin && !wkn) continue;                                   // Summen-/Leerzeilen überspringen
+      const id = wkn || isin || symbol;
+      if (!id) continue;                                         // Summen- und Leerzeilen überspringen
       const qty = parseNum(get(c, 'qty')), buy = parseNum(get(c, 'buy'));
-      const h = { symbol, isin, wkn, name: get(c, 'name'), qty, buy };
-      const known = KNOWN[wkn];
-      if (known) { if (!h.symbol && known[0]) h.symbol = known[0]; h.name = known[1]; }
-      const price = parseNum(get(c, 'price'));
-      if (isFinite(price)) {                                                    // Kurs steht schon in der CSV (Bank-Export)
-        h.csvPrice = price; h.csvCur = get(c, 'cur').toUpperCase() || 'EUR'; h.csvTime = get(c, 'time');
-        h.csvDayAbs = parseNum(get(c, 'dayAbs')); h.csvDayPct = parseNum(get(c, 'dayPct'));
-      }
-      h.kind = get(c, 'kind');
-      const k = label(h), prev = map.get(k);
-      if (prev && isFinite(qty) && isFinite(prev.qty)) {                        // gleiche Aktie mehrfach -> zusammenfassen
+      let price = parseNum(get(c, 'price'));
+      const value = parseNum(get(c, 'value'));
+      if (!isFinite(price) && isFinite(value) && qty) price = value / qty;
+      const it = {
+        id, wkn, isin, symbol, qty, buy, price,
+        name: NAMES[wkn] || get(c, 'name') || id,
+        rawName: get(c, 'name'),
+        cur: (get(c, 'cur') || 'EUR').toUpperCase().replace(/[^A-Z]/g, '') || 'EUR',
+        time: get(c, 'time'),
+        dayAbs: parseNum(get(c, 'dayAbs')), dayPct: parseNum(get(c, 'dayPct')),
+        kind: get(c, 'kind')
+      };
+      const prev = map.get(id);
+      if (prev && isFinite(qty) && isFinite(prev.qty)) {          // gleiche Position mehrfach -> zusammenfassen
         const tq = prev.qty + qty;
         if (isFinite(buy) && isFinite(prev.buy)) prev.buy = (prev.buy * prev.qty + buy * qty) / tq;
+        if (isFinite(it.dayAbs) && isFinite(prev.dayAbs)) prev.dayAbs += it.dayAbs;
         prev.qty = tq;
-        if (isFinite(h.csvDayAbs) && isFinite(prev.csvDayAbs)) prev.csvDayAbs += h.csvDayAbs;
-      } else map.set(k, h);
+      } else map.set(id, it);
     }
-    const list = [...map.values()];
-    if (!list.length) throw new Error('Keine Aktien in der Datei gefunden (Kopfzeile erkannt, aber keine gültigen Zeilen darunter).');
-    return list;
+    const items = [...map.values()];
+    if (!items.length) throw new Error('Die Kopfzeile wurde gefunden, aber darunter stehen keine Wertpapiere.');
+    if (!stand) {
+      const t = items.map(i => i.time).filter(Boolean).sort((a, b) => toDate(b) - toDate(a))[0];
+      if (t) stand = t.replace(/:\d{2}$/, '');
+    }
+    return { items, stand };
+  }
+  function toDate(s) {
+    const m = String(s).match(/(\d{2})\.(\d{2})\.(\d{4})\s*(\d{2})?:?(\d{2})?/);
+    return m ? new Date(+m[3], m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)) : new Date(0);
   }
   function decode(buf) {
     const b = new Uint8Array(buf);
-    if (b[0] === 0x50 && b[1] === 0x4B) throw new Error('Das ist eine Excel-Datei (.xlsx). Bitte in Excel „Speichern unter → CSV (Trennzeichen-getrennt)“ wählen.');
+    if (b[0] === 0x50 && b[1] === 0x4B) throw new Error('Das ist eine Excel-Datei (.xlsx). Bitte in Excel „Speichern unter → CSV (Trennzeichen-getrennt)“ wählen, oder bei der Bank direkt als CSV exportieren.');
     if (b[0] === 0xFF && b[1] === 0xFE) return new TextDecoder('utf-16le').decode(buf);
     try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); }
-    catch { return new TextDecoder('windows-1252').decode(buf); }               // typisch für Excel unter Windows
+    catch { return new TextDecoder('windows-1252').decode(buf); }
   }
-  function showError(msg) { setStatus(msg, true); $('dropErr').textContent = msg; }
-  function useHoldings(list, source) {
-    holdings = list;
-    store.set('aktien.holdings', holdings);
-    data = {}; selected = null;
-    setStatus(`${holdings.length} Aktien aus ${source} geladen.`, 'ok');
-    render(); refresh();
+
+  function useDepot(text, file) {
+    try {
+      const d = parseCSV(text);
+      depot = { ...d, file };
+      store.set('aktien.depot', depot);
+      const noPrice = depot.items.filter(i => !isFinite(i.price)).length;
+      if (noPrice === depot.items.length) setBanner(`${depot.items.length} Wertpapiere geladen, aber in der Datei steht kein aktueller Kurs. Bitte bei der Bank die Depotübersicht mit der Spalte „Kurs“ exportieren.`, 'err');
+      else if (noPrice) setBanner(`✓ ${depot.items.length} Wertpapiere geladen. Bei ${noPrice} davon fehlt der Kurs in der Datei.`, 'err');
+      else setBanner(`✓ ${depot.items.length} Wertpapiere aus „${file}“ geladen.`, 'ok');
+      render();
+    } catch (e) { setBanner(e.message, 'err'); }
   }
-  $('demo').onclick = () => useHoldings(parseCSV(EXAMPLE_CSV), 'dem Beispieldepot');
-  $('dlExample').onclick = () => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['\ufeff' + EXAMPLE_CSV], { type: 'text/csv;charset=utf-8' }));
-    a.download = 'beispiel.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  };
-  function loadFile(file) {
-    $('dropErr').textContent = '';
-    setStatus('Lese ' + file.name + ' …');
+  function loadFile(f) {
     const r = new FileReader();
-    r.onerror = () => showError('Die Datei konnte nicht gelesen werden.');
-    r.onload = () => {
-      try {
-        useHoldings(parseCSV(decode(r.result)), file.name);
-      } catch (e) { showError(e.message); }
-    };
-    r.readAsArrayBuffer(file);
+    r.onerror = () => setBanner('Die Datei konnte nicht gelesen werden.', 'err');
+    r.onload = () => { try { useDepot(decode(r.result), f.name); } catch (e) { setBanner(e.message, 'err'); } };
+    r.readAsArrayBuffer(f);
   }
   $('csvInput').onchange = e => { if (e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ''; };
   const drop = $('drop');
   ['dragover', 'dragenter'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
   document.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
-
-  // ---------- API ----------
-  const key = () => $('apiKey').value.trim();
-  $('showKey').onchange = e => { $('apiKey').type = e.target.checked ? 'text' : 'password'; };
-  $('changeKey').onclick = () => { $('steps').classList.remove('hidden'); $('step2').classList.add('hidden'); $('apiKey').focus(); };
-  $('apiKey').onkeydown = e => { if (e.key === 'Enter') $('saveKey').click(); };
-  $('saveKey').onclick = async () => {
-    // Leerzeichen und Zeilenumbrüche beim Kopieren entfernen
-    $('apiKey').value = key().replace(/\s+/g, '');
-    if (!key()) { setStatus('Bitte zuerst den API-Key in das Feld einfügen.', true); $('apiKey').focus(); return; }
-    const btn = $('saveKey');
-    btn.disabled = true; btn.textContent = 'Prüfe …';
-    setStatus('Prüfe deinen API-Key bei Finnhub …', 'busy');
-    try {
-      const q = await api('/quote', { symbol: 'AAPL' });
-      if (!q || typeof q.c !== 'number') throw new Error('Finnhub hat eine unerwartete Antwort geschickt. Ist der Key vollständig kopiert?');
-      store.set('aktien.key', key()); keyOk = true;
-      setStatus(holdings.length ? '✓ Der Key funktioniert. Kurse werden jetzt geladen …'
-                                : '✓ Der Key funktioniert und ist gespeichert. Jetzt Schritt 2: Depot laden.', 'ok');
-      render(); refresh();
-    } catch (e) {
-      keyOk = false;
-      setStatus(e.message, true);
-    } finally { btn.disabled = false; btn.textContent = 'Key prüfen und speichern'; }
+  $('demo').onclick = () => useDepot(EXAMPLE_CSV, 'Beispieldepot');
+  $('dlExample').onclick = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\ufeff' + EXAMPLE_CSV], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'beispiel.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
 
-  // Gratis-Tarif: max. 60 Abfragen pro Minute. Wir bleiben bei 50 und warten sonst kurz.
-  const calls = [];
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-  let waitNote = null;
-  async function slot() {
-    for (;;) {
-      const now = Date.now();
-      while (calls.length && now - calls[0] > 60000) calls.shift();
-      if (calls.length < 50) { calls.push(now); return; }
-      const wait = 60000 - (now - calls[0]) + 200;
-      if (waitNote) waitNote(Math.ceil(wait / 1000));
-      await sleep(Math.min(wait, 5000));
-    }
-  }
-  async function api(path, params, retry = true) {
-    await slot();
-    const u = new URL(API + path);
-    Object.entries({ ...params, token: key() }).forEach(([k, v]) => u.searchParams.set(k, v));
-    let res;
-    try { res = await fetch(u); }
-    catch { throw new Error('Keine Verbindung zu Finnhub. Bitte Internetverbindung prüfen. (Werbeblocker oder Firmen-Netzwerk können die Seite auch blockieren.)'); }
-    if (res.status === 429 && retry) { await sleep(20000); return api(path, params, false); }
-    if (res.status === 401) throw new Error('Der API-Key ist falsch. Bitte auf finnhub.io/dashboard nachsehen und den Key komplett neu kopieren.');
-    if (res.status === 403) throw new Error('Diese Aktie oder Börse ist im kostenlosen Finnhub-Tarif nicht enthalten.');
-    if (res.status === 429) throw new Error('Zu viele Abfragen auf einmal (Gratis-Limit: 60 pro Minute). Bitte eine Minute warten und dann „Aktualisieren“ klicken.');
-    if (!res.ok) throw new Error('Finnhub meldet einen Fehler (Code ' + res.status + '). Bitte später nochmal versuchen.');
-    return res.json();
-  }
-  const ymd = d => d.toISOString().slice(0, 10);
-
-  // Dollar -> Euro (Referenzkurs der Europäischen Zentralbank, kostenlos, ohne Key)
-  let fx = { rate: NaN, at: 0, date: '' };
-  async function loadFx() {
-    if (Date.now() - fx.at < 3600e3 && isFinite(fx.rate)) return;
-    for (const url of ['https://api.frankfurter.app/latest?from=USD&to=EUR', 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR']) {
-      try {
-        const r = await fetch(url); if (!r.ok) continue;
-        const j = await r.json();
-        if (j && j.rates && j.rates.EUR) { fx = { rate: j.rates.EUR, at: Date.now(), date: j.date || '' }; return; }
-      } catch {}
-    }
-  }
-
-  async function refresh(withNews = true, manual = false) {
-    if (busy) return;
-    if (!key()) { setStatus('Bitte zuerst in Schritt 1 deinen Finnhub API-Key eintragen.', true); render(); return; }
-    if (!holdings.length) { if (manual) setStatus('Noch keine Aktien geladen. Bitte in Schritt 2 eine CSV-Datei wählen oder das Beispieldepot nehmen.', true); return; }
-    busy = true; $('refresh').disabled = true; $('refresh').textContent = 'Lädt …';
-    progress(0.03); render(false);
-    const to = new Date(), from = new Date(Date.now() - 7 * 864e5);
-    let errors = 0, lastErr = '';
-    if (holdings.some(h => h.csvCur === 'EUR' && h.symbol)) {
-      setStatus('Lade Dollar-Euro-Kurs …', 'busy');
-      await loadFx();
-    }
-    // ISIN ohne Kürzel (und ohne Kurs in der CSV) über die Finnhub-Suche zuordnen
-    for (const h of holdings.filter(h => !h.symbol && h.isin && !isFinite(h.csvPrice) && !h.unresolved)) {
-      setStatus(`Suche Börsenkürzel für ${h.isin} …`, 'busy');
-      try {
-        const r = await api('/search', { q: h.isin });
-        const list = (r && r.result || []).filter(x => x.symbol);
-        const pick = list.find(x => !x.symbol.includes('.') && /stock|adr|common/i.test(x.type || '')) || list.find(x => !x.symbol.includes('.')) || list[0];
-        if (pick) { h.symbol = pick.symbol; if (!h.name) h.name = pick.description || ''; } else h.unresolved = true;
-      } catch (e) { errors++; lastErr = e.message; break; }
-    }
-    store.set('aktien.holdings', holdings);
-    const todo = holdings.filter(h => h.symbol);
-    for (const h of holdings) if (!h.symbol && !isFinite(h.csvPrice)) { errors++; lastErr = `Für ${label(h)} gibt es weder ein Börsenkürzel noch einen Kurs in der CSV. Bitte bei der Aktie auf „Kürzel prüfen“ klicken.`; }
-    for (let i = 0; i < todo.length; i++) {
-      const s = todo[i].symbol;
-      setStatus(`Lade Live-Kurs${withNews ? ' und Nachrichten' : ''} für ${todo[i].name || s} (${i + 1} von ${todo.length}) …`, 'busy');
-      waitNote = sec => setStatus(`Kurze Pause wegen des Gratis-Limits von Finnhub (noch ca. ${sec} Sek.) … ${i} von ${todo.length} geladen.`, 'busy');
-      progress((i + 0.5) / todo.length);
-      const d = data[s] || (data[s] = {});
-      try {
-        const jobs = [api('/quote', { symbol: s }).then(q => { d.quote = q && q.c ? q : null; })];
-        // Profil (Logo, Name, Währung) nur, wenn die CSV das nicht schon liefert
-        if (!d.profile && !isFinite(todo[i].csvPrice)) jobs.push(api('/stock/profile2', { symbol: s }).then(p => { d.profile = p || {}; }).catch(() => { d.profile = {}; }));
-        if (withNews) jobs.push(api('/company-news', { symbol: s, from: ymd(from), to: ymd(to) })
-                        .then(n => { d.news = Array.isArray(n) ? n.slice(0, 25) : []; }).catch(() => {}));
-        await Promise.all(jobs);
-        d.tried = true;
-        if (!d.quote && !isFinite(todo[i].csvPrice)) { errors++; lastErr = `Für ${s} wurde kein Kurs gefunden. Bitte bei der Aktie auf „Kürzel prüfen“ klicken und das richtige Kürzel suchen.`; }
-      } catch (e) {
-        d.tried = true;
-        if (!isFinite(todo[i].csvPrice)) { errors++; lastErr = e.message; }
-        if (/API-Key ist falsch|Keine Verbindung/.test(e.message)) { errors++; lastErr = e.message; if (/API-Key/.test(e.message)) keyOk = false; break; }
-      }
-      render(false);
-    }
-    waitNote = null;
-    busy = false; $('refresh').disabled = false; $('refresh').textContent = 'Aktualisieren'; progress(1);
-    const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    $('updated').textContent = 'Stand: ' + now + ' Uhr';
-    const rows = rowsData(), live = rows.filter(r => r.src === 'live').length, csv = rows.filter(r => r.src === 'csv').length;
-    const fxNote = holdings.some(h => h.csvCur === 'EUR' && h.symbol) && !isFinite(fx.rate) ? ' Der Dollar-Euro-Kurs konnte nicht geladen werden, darum gelten für alle Werte die Kurse aus der CSV.' : '';
-    const summary = csv ? `${live} Werte mit Live-Kurs, ${csv} mit dem Kurs aus deiner CSV.` : `Kurse für alle ${live} Werte geladen.`;
-    if (!errors) setStatus(`✓ Fertig (${now} Uhr): ${summary}${fxNote}`, fxNote ? true : 'ok');
-    else setStatus(`${summary} Problem: ${lastErr}`, true);
-    render();
-  }
-  $('refresh').onclick = () => refresh(true, true);
-  // Kurse jede Minute, Nachrichten alle 10 Minuten automatisch aktualisieren
-  let tick = 0;
-  setInterval(() => { if (document.visibilityState === 'visible' && keyOk && holdings.length) refresh(++tick % 10 === 0); }, 60000);
-  let barTimer;
-  function progress(f) {
-    const b = $('bar'); clearTimeout(barTimer);
-    b.style.opacity = 1; b.style.width = Math.round(f * 100) + '%';
-    if (f >= 1) barTimer = setTimeout(() => { b.style.opacity = 0; b.style.width = '0'; }, 600);
-  }
-
-  // ---------- Darstellung ----------
+  // ---------- Anzeige ----------
   const fmt = (n, cur, d = 2) => !isFinite(n) ? '–' :
-    n.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d }) + (cur ? ' ' + cur : '');
+    n.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d }) + (cur ? ' ' + (cur === 'EUR' ? '€' : cur) : '');
+  const signed = (n, cur) => !isFinite(n) ? '–' : (n > 0 ? '+' : '') + fmt(n, cur);
   const pct = n => !isFinite(n) ? '–' : (n > 0 ? '+' : '') + fmt(n) + ' %';
   const cls = n => !isFinite(n) || n === 0 ? '' : n > 0 ? 'up' : 'down';
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  // kind: true = Fehler, 'ok' = Erfolg, 'busy' = lädt gerade
-  function setStatus(msg, kind) {
-    $('status').textContent = msg;
-    const k = kind === true ? 'err' : kind || '';
-    $('banner').className = 'banner' + (k ? ' ' + k : '') + (msg ? '' : ' hidden');
-    $('spin').classList.toggle('hidden', k !== 'busy');
-  }
+  const isEtf = i => /etf|fonds|etc|zertifikat/i.test(i.kind || '') || /\bETF\b|UCITS|UETF/i.test(i.rawName || '');
+  function setBanner(msg, kind) { const b = $('banner'); b.textContent = msg; b.className = 'banner' + (kind ? ' ' + kind : '') + (msg ? '' : ' hidden'); }
 
-  function rowsData() {
-    return holdings.map((h, idx) => {
-      const d = data[h.symbol] || {}, q = d.quote, p = d.profile || {};
-      const qty = isFinite(h.qty) ? h.qty : NaN, hasCsv = isFinite(h.csvPrice);
-      let price = NaN, dp = NaN, dayAbs = NaN, cur = p.currency || (q ? 'USD' : ''), src = '', note = '';
-      if (q) {
-        let f = 1;
-        if (hasCsv && h.csvCur === 'EUR') { f = fx.rate; cur = 'EUR'; }    // Dollar-Kurs in Euro umrechnen
-        price = q.c * f; dp = q.dp; dayAbs = q.d * f * qty; src = 'live';
-        // Plausibilitätsprüfung: weicht der Live-Kurs stark vom CSV-Kurs ab, passt das Kürzel nicht (z. B. ADR mit anderem Verhältnis)
-        if (!isFinite(price) || (hasCsv && Math.abs(price / h.csvPrice - 1) > 0.2)) {
-          price = NaN; src = ''; if (isFinite(f)) note = `Live-Kurs von ${h.symbol} passt nicht zum Kurs in der CSV, darum gilt der CSV-Kurs.`;
-        }
-      }
-      if (!src && hasCsv) {
-        price = h.csvPrice; cur = h.csvCur; dp = h.csvDayPct; src = 'csv';
-        dayAbs = isFinite(h.csvDayAbs) ? h.csvDayAbs : (isFinite(dp) ? price * qty * dp / (100 + dp) : NaN);
-      }
-      const value = price * qty, cost = h.buy * qty;
-      return { ...h, idx, src, note, missing: !busy && !src && (d.tried || !h.symbol), symbol: label(h),
-        name: h.name || p.name || '', logo: p.logo, cur, price, dp, dayAbs,
-        value, cost, pl: value - cost, plp: (price / h.buy - 1) * 100 };
+  function rows() {
+    const list = depot.items.map(i => {
+      const value = i.price * i.qty, cost = i.buy * i.qty;
+      const dayAbs = isFinite(i.dayAbs) ? i.dayAbs : (isFinite(i.dayPct) ? value * i.dayPct / (100 + i.dayPct) : NaN);
+      return { ...i, value, cost, dayAbs, dp: i.dayPct, pl: value - cost, plp: (i.price / i.buy - 1) * 100, etf: isEtf(i) };
     });
+    const total = list.reduce((s, r) => s + (isFinite(r.value) ? r.value : 0), 0);
+    list.forEach(r => { r.share = r.value / total * 100; });
+    return list;
+  }
+  function sum(list) {
+    const t = { value: 0, cost: 0, day: 0, n: 0 };
+    for (const r of list) if (isFinite(r.value)) {
+      t.value += r.value; t.n++;
+      if (isFinite(r.cost)) t.cost += r.cost;
+      if (isFinite(r.dayAbs)) t.day += r.dayAbs;
+    }
+    return t;
   }
 
-  function render(full = true) {
-    const has = holdings.length > 0;
-    const setup = !keyOk || !has;
-    $('steps').classList.toggle('hidden', !setup);
-    $('step1').classList.toggle('done', keyOk);
-    $('step2').classList.toggle('done', has);
-    $('step2').classList.remove('hidden');
-    $('changeKey').classList.toggle('hidden', setup);
+  function render() {
+    const has = !!(depot && depot.items && depot.items.length);
     $('drop').classList.toggle('hidden', has);
     $('tiles').classList.toggle('hidden', !has);
-    $('layout').classList.toggle('hidden', !has);
+    $('table').classList.toggle('hidden', !has);
+    $('stand').textContent = has && depot.stand ? `Kurse vom ${depot.stand} Uhr` : '';
     if (!has) return;
 
-    const rows = rowsData();
-    // Kacheln (je Währung summiert)
-    const byCur = {};
-    rows.forEach(r => {
-      const c = r.cur || '?', t = byCur[c] || (byCur[c] = { value: 0, cost: 0, day: 0, n: 0 });
-      if (isFinite(r.value)) { t.value += r.value; t.n++; if (isFinite(r.dayAbs)) t.day += r.dayAbs; if (isFinite(r.cost)) t.cost += r.cost; }
-    });
-    const curs = Object.entries(byCur).filter(([, t]) => t.n);
-    const line = f => curs.length ? curs.map(f).join('<br>') : '–';
-    const best = rows.filter(r => isFinite(r.dp)).sort((a, b) => b.dp - a.dp);
+    const all = rows(), t = sum(all);
+    const etfs = all.filter(r => r.etf), stocks = all.filter(r => !r.etf);
+    const te = sum(etfs), ts = sum(stocks);
+    const withDay = all.filter(r => isFinite(r.dp)).sort((a, b) => b.dp - a.dp);
+    const best = withDay[0], worst = withDay[withDay.length - 1];
     $('tiles').innerHTML = `
-      <div class="tile"><div class="label">Depotwert</div><div class="value">${line(([c, t]) => fmt(t.value, c))}</div></div>
-      <div class="tile"><div class="label">Heute</div><div class="value">${line(([c, t]) =>
-        `<span class="${cls(t.day)}">${t.day > 0 ? '+' : ''}${fmt(t.day, c)}</span>`)}</div>
-        <div class="sub">${line(([c, t]) => `<span class="${cls(t.day)}">${pct(t.day / (t.value - t.day) * 100)}</span>`)}</div></div>
-      <div class="tile"><div class="label">Gewinn/Verlust gesamt</div><div class="value">${line(([c, t]) =>
-        t.cost ? `<span class="${cls(t.value - t.cost)}">${t.value - t.cost > 0 ? '+' : ''}${fmt(t.value - t.cost, c)}</span>` : '–')}</div>
-        <div class="sub">${line(([c, t]) => t.cost ? `<span class="${cls(t.value - t.cost)}">${pct((t.value / t.cost - 1) * 100)}</span>` : '')}</div></div>
+      <div class="tile"><div class="label">Depotwert</div><div class="value">${fmt(t.value, 'EUR')}</div>
+        <div class="sub" style="color:var(--muted)">${all.length} Wertpapiere</div></div>
+      <div class="tile"><div class="label">Heute</div><div class="value ${cls(t.day)}">${signed(t.day, 'EUR')}</div>
+        <div class="sub ${cls(t.day)}">${pct(t.day / (t.value - t.day) * 100)}</div></div>
+      <div class="tile"><div class="label">Gewinn/Verlust seit Kauf</div><div class="value ${cls(t.value - t.cost)}">${t.cost ? signed(t.value - t.cost, 'EUR') : '–'}</div>
+        <div class="sub ${cls(t.value - t.cost)}">${t.cost ? pct((t.value / t.cost - 1) * 100) : ''}</div></div>
+      <div class="tile"><div class="label">Aufteilung</div>
+        <div class="sub" style="margin-top:8px">Aktien: <b>${fmt(ts.value, 'EUR', 0)}</b> (${fmt(ts.value / t.value * 100, '', 0)} %)</div>
+        <div class="sub">ETFs &amp; Fonds: <b>${fmt(te.value, 'EUR', 0)}</b> (${fmt(te.value / t.value * 100, '', 0)} %)</div></div>
       <div class="tile"><div class="label">Bester / schwächster Wert heute</div>
-        <div class="sub" style="margin-top:8px">${best.length ? `<b>${esc(best[0].name || best[0].symbol)}</b> <span class="${cls(best[0].dp)}">${pct(best[0].dp)}</span>` : '–'}</div>
-        <div class="sub">${best.length > 1 ? `<b>${esc(best.at(-1).name || best.at(-1).symbol)}</b> <span class="${cls(best.at(-1).dp)}">${pct(best.at(-1).dp)}</span>` : ''}</div></div>`;
+        <div class="sub" style="margin-top:8px">${best ? `<b>${esc(best.name)}</b> <span class="${cls(best.dp)}">${pct(best.dp)}</span>` : '–'}</div>
+        <div class="sub">${worst && worst !== best ? `<b>${esc(worst.name)}</b> <span class="${cls(worst.dp)}">${pct(worst.dp)}</span>` : ''}</div></div>`;
 
-    // Tabelle
-    rows.sort((a, b) => {
+    let list = filter === 'etf' ? etfs : filter === 'aktie' ? stocks : all;
+    $('count').textContent = `(${list.length})`;
+    list = list.slice().sort((a, b) => {
       const x = a[sort.k], y = b[sort.k];
-      if (typeof x === 'string') return x.localeCompare(y) * sort.dir;
+      if (typeof x === 'string') return x.localeCompare(y, 'de') * sort.dir;
       return ((isFinite(x) ? x : -Infinity) - (isFinite(y) ? y : -Infinity)) * sort.dir;
     });
     document.querySelectorAll('th').forEach(th => {
       th.textContent = th.textContent.replace(/ [▲▼]$/, '') + (th.dataset.k === sort.k ? (sort.dir > 0 ? ' ▲' : ' ▼') : '');
     });
-    $('rows').innerHTML = rows.map(r => `
-      <tr data-s="${esc(r.symbol)}" class="${r.symbol === selected ? 'active' : ''}">
-        <td><div style="display:flex;align-items:center;gap:6px">
-            ${r.logo ? `<img class="logo" src="${esc(r.logo)}" alt="" loading="lazy">` : ''}
-            <div style="min-width:0"><span class="sym">${esc(r.name || r.symbol)}</span>${r.kind && /etf|fonds/i.test(r.kind) ? `<span class="kind">${esc(r.kind)}</span>` : ''}
-              <span class="name">${[r.symbol !== r.wkn ? r.symbol : '', r.wkn].filter(Boolean).map(esc).join(' · ')}</span></div>
-            ${r.missing
-              ? `<button class="edit warn" data-fix="${r.idx}" title="Für diese Aktie gibt es keinen Kurs">⚠ Kürzel prüfen</button>`
-              : `<button class="edit" data-fix="${r.idx}" title="Börsenkürzel ändern">✏️</button>`}</div></td>
+    const maxShare = Math.max(...all.map(r => isFinite(r.share) ? r.share : 0));
+    $('rows').innerHTML = list.map(r => `
+      <tr>
+        <td><span class="sym">${esc(r.name)}</span>${r.etf ? '<span class="kind">ETF</span>' : ''}
+          <span class="small">${esc([r.wkn && 'WKN ' + r.wkn, r.isin, r.symbol].filter(Boolean).join(' · '))}</span></td>
         <td>${fmt(r.qty, '', r.qty % 1 ? 3 : 0)}</td>
         <td>${fmt(r.buy, r.cur)}</td>
-        <td title="${esc(r.note || (r.src === 'live' ? 'Live-Kurs von Finnhub' + (r.cur === 'EUR' && r.symbol ? ', in Euro umgerechnet' : '') : r.src === 'csv' ? 'Kurs aus deiner CSV' : ''))}">${!isFinite(r.price) && busy ? '<span class="loading">lädt …</span>' : `<b>${fmt(r.price, r.cur)}</b>`}
-          <span class="src ${r.src}">${r.src === 'live' ? '● live' : r.src === 'csv' ? 'CSV ' + esc((r.csvTime || '').replace(/^(\d\d\.\d\d)\.\d{4}\s+(\d\d:\d\d).*/, '$1. $2')) : ''}</span></td>
+        <td><b>${fmt(r.price, r.cur)}</b>${r.time ? `<span class="small">${esc(r.time.replace(/^(\d\d\.\d\d)\.\d{4}\s+(\d\d:\d\d).*/, '$1. $2'))}</span>` : ''}</td>
         <td class="${cls(r.dp)}">${pct(r.dp)}</td>
         <td>${fmt(r.value, r.cur)}</td>
-        <td class="${cls(r.pl)}">${isFinite(r.pl) ? (r.pl > 0 ? '+' : '') + fmt(r.pl, r.cur) : '–'}</td>
+        <td>${fmt(r.share, '', 1)} %<div class="bar"><i style="width:${isFinite(r.share) ? r.share / maxShare * 100 : 0}%"></i></div></td>
+        <td class="${cls(r.pl)}">${signed(r.pl, r.cur)}</td>
         <td class="${cls(r.plp)}">${pct(r.plp)}</td>
       </tr>`).join('');
-
-    if (full || !selected) renderNews();
   }
 
-  function renderNews() {
-    const syms = selected ? [selected] : holdings.map(h => h.symbol);
-    $('newsTitle').textContent = selected ? `Nachrichten – ${selected}` : 'Nachrichten – alle Aktien';
-    $('allNews').classList.toggle('hidden', !selected);
-    const seen = new Set();
-    const items = syms.flatMap(s => ((data[s] || {}).news || []).map(n => ({ ...n, sym: s })))
-      .filter(n => n.headline && !seen.has(n.headline) && seen.add(n.headline))
-      .sort((a, b) => b.datetime - a.datetime)
-      .slice(0, 80);
-    $('news').innerHTML = items.length ? items.map(n => `
-      <article>
-        ${n.image ? `<img src="${esc(n.image)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
-        <div>
-          <div class="meta"><span class="tag">${esc(n.sym)}</span>${esc(n.source)} · ${new Date(n.datetime * 1000).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
-          <a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.headline)}</a>
-          ${n.summary ? `<p>${esc(n.summary)}</p>` : ''}
-        </div>
-      </article>`).join('')
-      : `<div class="empty">${busy ? 'Nachrichten werden geladen …' : key() ? 'Keine Nachrichten der letzten 7 Tage gefunden.' : 'API-Key eintragen, um Nachrichten zu laden.'}</div>`;
-  }
-
-  $('rows').onclick = e => {
-    const fb = e.target.closest('[data-fix]');
-    if (fb) { openFix(+fb.dataset.fix); return; }
-    const tr = e.target.closest('tr'); if (!tr) return;
-    selected = selected === tr.dataset.s ? null : tr.dataset.s;
-    render();
-  };
-  $('allNews').onclick = () => { selected = null; render(); };
   document.querySelector('thead').onclick = e => {
     const k = e.target.closest('th')?.dataset.k; if (!k) return;
-    sort = { k, dir: sort.k === k ? -sort.dir : (k === 'symbol' ? 1 : -1) };
-    store.set('aktien.sort', sort); render(false);
+    sort = { k, dir: sort.k === k ? -sort.dir : (k === 'name' ? 1 : -1) };
+    store.set('aktien.sort2', sort); render();
   };
-
-  // ---------- Kürzel korrigieren ----------
-  let fixIdx = -1;
-  function openFix(i) {
-    fixIdx = i; const h = holdings[i];
-    $('fixWhat').textContent = [h.name, label(h)].filter(Boolean).join(' · ');
-    $('fixQuery').value = h.name || h.isin || h.wkn || h.symbol || '';
-    $('fixManual').value = '';
-    $('fixNone').classList.toggle('hidden', !isFinite(h.csvPrice));
-    $('fixList').innerHTML = '';
-    $('fix').classList.remove('hidden');
-    $('fix').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    if (key() && $('fixQuery').value) searchFix();
-  }
-  $('fixClose').onclick = () => { $('fix').classList.add('hidden'); fixIdx = -1; };
-  $('fixQuery').onkeydown = e => { if (e.key === 'Enter') searchFix(); };
-  $('fixManual').onkeydown = e => { if (e.key === 'Enter') $('fixSave').click(); };
-  $('fixSearch').onclick = () => searchFix();
-  $('fixSave').onclick = () => { const v = $('fixManual').value.trim().toUpperCase(); if (v) applyFix(v, ''); };
-  async function searchFix() {
-    const q = $('fixQuery').value.trim();
-    if (!q) return;
-    if (!key()) { setStatus('Bitte zuerst den API-Key eintragen.', true); return; }
-    $('fixList').innerHTML = '<li class="empty"><span class="spin"></span>&nbsp; Suche bei Finnhub …</li>';
-    try {
-      const r = await api('/search', { q });
-      const list = (r && r.result || []).filter(x => x.symbol)
-        .sort((a, b) => a.symbol.includes('.') - b.symbol.includes('.')).slice(0, 12);
-      $('fixList').innerHTML = list.length ? list.map(x => `
-        <li><div class="d"><b>${esc(x.symbol)}</b> ${esc(x.description || '')}
-          <small>${esc(x.type || '')}${x.symbol.includes('.') ? ' · ausländische Börse, im Gratis-Tarif meist ohne Kurs' : ' · US-Börse, funktioniert im Gratis-Tarif'}</small></div>
-          <button data-pick="${esc(x.symbol)}" data-name="${esc(x.description || '')}" ${x.symbol.includes('.') ? '' : 'class="primary"'}>Übernehmen</button></li>`).join('')
-        : '<li class="empty">Nichts gefunden. Versuch einen kürzeren Namen, z. B. nur „Allianz“.</li>';
-    } catch (e) { $('fixList').innerHTML = `<li class="empty err">${esc(e.message)}</li>`; }
-  }
-  $('fixNone').onclick = () => {
-    const h = holdings[fixIdx]; if (!h) return;
-    h.symbol = ''; store.set('aktien.holdings', holdings);
-    $('fix').classList.add('hidden'); setStatus(`Für ${h.name || label(h)} gilt jetzt der Kurs aus der CSV.`, 'ok'); render();
-  };
-  $('fixList').onclick = e => { const b = e.target.closest('[data-pick]'); if (b) applyFix(b.dataset.pick, b.dataset.name); };
-  async function applyFix(sym, desc) {
-    if (fixIdx < 0) return;
-    const h = holdings[fixIdx];
-    h.symbol = sym; delete h.unresolved;
-    if (!h.name && desc) h.name = desc;
-    store.set('aktien.holdings', holdings);
-    $('fix').classList.add('hidden');
-    setStatus(`Prüfe ${sym} …`, 'busy');
-    const d = data[sym] = {};
-    if (h.csvCur === 'EUR') await loadFx();
-    try {
-      const q = await api('/quote', { symbol: sym });
-      d.quote = q && q.c ? q : null; d.tried = true;
-      api('/stock/profile2', { symbol: sym }).then(p => { d.profile = p || {}; render(false); }).catch(() => {});
-      const to = new Date(), from = new Date(Date.now() - 7 * 864e5);
-      api('/company-news', { symbol: sym, from: ymd(from), to: ymd(to) }).then(n => { d.news = Array.isArray(n) ? n.slice(0, 25) : []; render(); }).catch(() => {});
-      render(false);
-      const r = rowsData()[fixIdx];
-      if (d.quote && r.src !== 'live') setStatus(`${sym} gespeichert. ${r.note || ''}`, true);
-      else setStatus(d.quote ? `✓ ${sym} gespeichert, Kurs: ${fmt(r.price, r.cur)}` : `${sym} gespeichert, aber Finnhub liefert dafür keinen Kurs. Bitte ein anderes Kürzel probieren (am besten eines ohne Punkt).`, d.quote ? 'ok' : true);
-    } catch (e) { d.tried = true; setStatus(`${sym}: ${e.message}`, true); }
+  $('tabs').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    filter = b.dataset.f;
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
     render();
-  }
+  };
 
   render();
-  if (holdings.length && key()) refresh();
-  else if (!key()) setStatus('Willkommen! Trage zuerst unten deinen Finnhub API-Key ein.', '');
+  if (depot && depot.items) setBanner(`Zuletzt geladen: „${depot.file}“. Für neue Kurse einfach eine frische CSV von deiner Bank laden.`, '');
 })();
 </script>
 </body>

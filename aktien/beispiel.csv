@@ -1,6 +1,6 @@
-Symbol;Name;Anzahl;Kaufkurs
-AAPL;Apple;10;150,00
-MSFT;Microsoft;5;310,50
-NVDA;NVIDIA;8;95,20
-AMZN;Amazon;6;128,00
-SAP;SAP (ADR);4;140,00
+﻿Name;WKN;Gattung;Stück;Einstandskurs;Kurs;Datum/Uhrzeit;Entwicklung prozentual (Heute)
+Apple;865985;Aktie;10;150,00;205,40;24.11.2026 17:30:00;0,45
+Siemens;723610;Aktie;8;120,50;210,10;24.11.2026 17:30:00;-0,62
+Allianz;840400;Aktie;5;210,00;365,20;24.11.2026 17:30:00;0,18
+MSCI World ETF;A0RPWH;ETF;40;65,30;102,85;24.11.2026 17:30:00;0,31
+Emerging Markets ETF;A12GVR;ETF;30;45,10;52,40;24.11.2026 17:30:00;-0,25
